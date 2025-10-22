@@ -55,7 +55,7 @@
             </button>
 
             <p class="small text-muted mt-3">
-              Already have an account? <a href="login.php" id="loginLink">Sign in</a>
+              Already have an account? <a href="../login/login.php" id="loginLink">Sign in</a>
             </p>
           </form>
         </div>

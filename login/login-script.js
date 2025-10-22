@@ -5,16 +5,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
   loginForm.addEventListener("submit", function(e) {
     e.preventDefault();
-    window.location.href = "dashboard.html";
+    window.location.href = "../dashboard.html";
   });
 
   signupLink.addEventListener("click", function(e) {
     e.preventDefault();
-    window.location.href = "register.php";
+    window.location.href = "../register/register.php";
   });
 
   forgotPasswordLink.addEventListener("click", function(e) {
     e.preventDefault();
-    window.location.href = "forgotpassword.html";
+    window.location.href = "../forgotpassword.html";
   });
 });
