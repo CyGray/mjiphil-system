@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   signupLink.addEventListener("click", function(e) {
     e.preventDefault();
-    window.location.href = "signup.html";
+    window.location.href = "register.php";
   });
 
   forgotPasswordLink.addEventListener("click", function(e) {

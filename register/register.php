@@ -7,7 +7,7 @@
     <title>Register | MJIPhil Construction</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="register-style.css">
   </head>
 
   <body>
@@ -62,7 +62,7 @@
       </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="register-script.js"></script>
   </body>
 
 </html>
