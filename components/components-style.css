@@ -1,0 +1,99 @@
+.container-fluid {
+    background-color: rgba(255, 255, 255, 0.625);
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.sidebar {
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    background-color: #ffffff;
+    min-height: 100vh;
+    padding: 20px;
+    opacity: 0;
+    animation: fadeIn 0.5s forwards ease-out;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 10px;
+    margin-bottom: 30px;
+}
+
+.company-logo {
+    width: 50%;
+    height: 50px;
+    object-fit: contain;
+}
+
+.company-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #000000;
+    letter-spacing: 1px;
+}
+
+.sidebar .nav {
+    margin-top: 5px;
+}
+
+.sidebar .nav-link {
+    color: #000000;
+    text-decoration: none;
+    padding: 12px 15px;
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    border-radius: 15px;
+    text-align: left;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.sidebar .nav-link i {
+    font-size: 16px;
+    color: #000000;
+    transition: color 0.3s ease;
+}
+
+.sidebar .nav-link.active {
+    background-color: rgb(100, 0, 0);
+    color: white;
+}
+
+.sidebar .nav-link.active i {
+    color: white;
+}
+
+.sidebar .nav-link:not(.active):hover {
+    background-color: rgb(100, 0, 0);
+    color: white;
+    transform: translateX(5px) scale(1.02);
+}
+
+.sidebar .nav-link:not(.active):hover i {
+    color: white;
+}
+
+.sidebar:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    transition: box-shadow 0.5s ease;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
