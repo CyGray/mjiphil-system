@@ -21,6 +21,7 @@
     left: 0;
     width: 250px;
     z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-header {
@@ -29,10 +30,11 @@
     gap: 10px;
     padding: 15px 10px;
     margin-bottom: 30px;
+    border-bottom: 2px solid #f0f0f0;
 }
 
 .company-logo {
-    width: 50%;
+    width: 50px;
     height: 50px;
     object-fit: contain;
 }
@@ -42,6 +44,7 @@
     font-weight: 700;
     color: #000000;
     letter-spacing: 1px;
+    line-height: 1.2;
 }
 
 .sidebar .nav {
@@ -87,6 +90,24 @@
     color: white;
 }
 
+/* Specific style for logout button */
+.sidebar .logout-btn {
+    color: #dc3545;
+}
+
+.sidebar .logout-btn i {
+    color: #dc3545;
+}
+
+.sidebar .logout-btn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.sidebar .logout-btn:hover i {
+    color: white;
+}
+
 .sidebar:hover {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     transition: box-shadow 0.5s ease;
@@ -95,5 +116,22 @@
 @keyframes fadeIn {
     to {
         opacity: 1;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
     }
 }

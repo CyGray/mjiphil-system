@@ -1,3 +1,8 @@
+<?php
+    require_once 'auth_check.php';
+    checkAdminAccess(); // This will redirect non-admin users to catalog.php
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory - MJI PHIL Construction</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <link href="inventory.css" rel="stylesheet">
+    <link href="./styles/inventory.css" rel="stylesheet">
 </head>
 <body>
     <div class="header">
@@ -193,6 +198,6 @@
         </div>
     </div>
 
-    <script src="inventory.js"></script>
+    <script src="./scripts/inventory.js"></script>
 </body>
 </html>
