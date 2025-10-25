@@ -96,38 +96,62 @@ body {
 
 .sidebar {
     width: 240px;
-    background-color: #8b3a3a;
-    color: white;
+    background-color: #f8f8f8;
+    color: #000000;
     padding: 2rem 0;
     position: relative;
+    transition: box-shadow 0.5s ease;
+}
+
+.sidebar:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar .nav {
+    margin-top: 5px;
 }
 
 .sidebar-item {
-    padding: 0.9rem 2rem;
+    padding: 12px 15px;
+    margin: 5px 15px;
     display: flex;
     align-items: center;
     gap: 0.8rem;
     cursor: pointer;
-    transition: all 0.3s;
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.8);
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+    text-decoration: none;
+    border-radius: 15px;
+    text-align: left;
 }
 
 .sidebar-item:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgb(100, 0, 0);
     color: white;
+    transform: translateX(5px) scale(1.02);
 }
 
 .sidebar-item.active {
-    background-color: rgba(255,255,255,0.15);
+    background-color: rgb(100, 0, 0);
     color: white;
-    border-left: 4px solid white;
-    padding-left: calc(2rem - 4px);
 }
 
 .sidebar-item i {
     width: 20px;
     text-align: center;
+    font-size: 16px;
+    color: #000000;
+    transition: color 0.3s ease;
+}
+
+.sidebar-item.active i {
+    color: white;
+}
+
+.sidebar-item:hover i {
+    color: white;
 }
 
 .logout-section {
