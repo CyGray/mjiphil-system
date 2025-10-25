@@ -4,10 +4,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login Page Skeleton</title>
+    <title>Register | MJIPhil Construction</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="login-style.css">
+    <link rel="stylesheet" href="register-style.css">
   </head>
 
   <body>
@@ -24,23 +24,24 @@
 
       <div class="login-panel d-flex align-items-center justify-content-center">
         <div class="login-form text-center w-75">
-          <h2 class="fw-bold mb-2 welcome-text">Welcome back!</h2>
-          <p class="text-muted mb-4 sub-text">Please enter your email and password.</p>
+          <h2 class="fw-bold mb-2 welcome-text">Create an Account</h2>
+          <p class="text-muted mb-4 sub-text">Please fill in the details to register.</p>
 
-          <form id="loginForm">
+          <form id="registerForm">
             <div class="mb-3">
-              <input type="email" id="email" class="form-control custom-input" placeholder="Your email" required>
+              <input type="text" id="name" class="form-control custom-input" placeholder="Full name" required>
             </div>
-
-            <div class="mb-2">
+            <div class="mb-3">
+              <input type="email" id="email" class="form-control custom-input" placeholder="Email address" required>
+            </div>
+            <div class="mb-3">
               <input type="password" id="password" class="form-control custom-input" placeholder="Password" required>
             </div>
-
-            <div class="text-end mb-3">
-              <a href="#" id="forgotPasswordLink" class="small text-muted">Forgot password?</a>
+            <div class="mb-3">
+              <input type="password" id="confirmPassword" class="form-control custom-input" placeholder="Confirm password" required>
             </div>
 
-            <button type="submit" class="btn btn-login w-100 custom-btn">Sign in</button>
+            <button type="submit" class="btn btn-login w-100 custom-btn">Register</button>
 
             <div class="d-flex align-items-center my-3">
               <hr class="flex-grow-1">
@@ -54,14 +55,14 @@
             </button>
 
             <p class="small text-muted mt-3">
-              Don’t have an account? <a href="#" id="signupLink">Sign up</a>
+              Already have an account? <a href="../login/login.php" id="loginLink">Sign in</a>
             </p>
           </form>
         </div>
       </div>
     </div>
 
-    <script src="login-script.js"></script>
+    <script src="register-script.js"></script>
   </body>
 
 </html>

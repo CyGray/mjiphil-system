@@ -1,0 +1,104 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+/* layout */
+.login-wrapper {
+  background-color: #431B1B;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+/* left side */
+.left-area {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* logo */
+.company-logo {
+  width: 300px;
+  height: auto;
+  position: relative;
+  top: -80px;
+}
+
+/* tagline */
+.tagline {
+  position: absolute;
+  top: 250px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Outfit", sans-serif;
+  font-size: 18px;
+  color: #fff;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* white panel */
+.login-panel {
+  background-color: #ffffff;
+  height: 100vh;
+  width: 60%;
+}
+
+/* welcome */
+.welcome-text {
+  position: relative;
+  top: 14px;
+  left: -163px;
+}
+
+/* subtext */
+.sub-text {
+  position: relative;
+  top: 12px;
+  left: -181px;
+}
+
+/* input fields */
+.custom-input {
+  border-radius: 10px;
+  border: 2px solid #431B1B;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.custom-input:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #431B1B;
+}
+
+/* sign in */
+.custom-btn {
+  border-radius: 10px;
+  background-color: #431B1B;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.custom-btn:hover {
+  background-color: #b10000;
+  transform: translateY(-2px);
+}
+
+/* google button */
+.custom-google {
+  border-radius: 10px;
+  border: 2px solid #431B1B;
+  padding: 10px;
+  font-size: 15px;
+}
