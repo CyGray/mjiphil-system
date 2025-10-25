@@ -1,10 +1,8 @@
 <?php
 require_once 'auth_check.php';
-checkAdminAccess(); // This will redirect non-admin users to catalog.php
-
+checkAdminAccess();
 require_once 'config.php';
 
-// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_item'])) {
         $category_id = $_POST['category_id'] ?? '';
@@ -32,6 +30,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("INSERT INTO product_image (product_id, image_url) VALUES (?, ?)");
                 $stmt->execute([$product_id, $image_url]);
             }
+
+            // Get category name for JSON
+            $catStmt = $pdo->prepare("SELECT category_name FROM category WHERE category_id = ?");
+            $catStmt->execute([$category_id]);
+            $category = $catStmt->fetch();
+
+            // Save to JSON
+            $jsonProduct = [
+                'product_name' => $product_name,
+                'description' => $description,
+                'price' => (float)$price,
+                'stock_quantity' => (int)$stock_quantity,
+                'category' => $category['category_name'],
+                'image_url' => $image_url
+            ];
+            
+            $jsonManager->addProduct($jsonProduct);
 
             $pdo->commit();
             $_SESSION['success'] = "Item added successfully!";
