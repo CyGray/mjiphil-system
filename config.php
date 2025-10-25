@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // DB connection settings
 $DB_HOST = '127.0.0.1';
@@ -147,5 +149,25 @@ CREATE TABLE user_payment_method (
     FOREIGN KEY (payment_method_id) REFERENCES payment_method(payment_method_id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
+INSERT INTO user (first_name, last_name, email, password, role) VALUES
+('Roel', 'Admin', 'roel@mjiphil.com', 'cm9lbDEyMw==', 'admin'),
+('Kyle', 'Admin', 'kyle@mjiphil.com', 'a3lsZTEyMw==', 'admin'),
+('Wilbert', 'Admin', 'wilbert@mjiphil.com', 'd2lsYmVydDEyMw==', 'admin'),
+('Gwen', 'Admin', 'gwen@mjiphil.com', 'Z3dlbjEyMw==', 'admin'),
+('JC', 'Admin', 'jc@mjiphil.com', 'amMxMjM=', 'admin'),
+('Nikolai', 'Admin', 'nikolai@mjiphil.com', 'bmlrb2xhaTEyMw==', 'admin');
+
+INSERT INTO category (category_name, description) VALUES
+('Tools', 'Construction tools and equipment'),
+('Materials', 'Building and construction materials'),
+('Safety Gear', 'Personal protective equipment'),
+('Essentials', 'Essential construction supplies'),
+('Electrical', 'Electrical supplies and equipment'),
+('Plumbing', 'Plumbing materials and fixtures'),
+('Hardware', 'Hardware and fasteners'),
+('Paint & Supplies', 'Paints, coatings, and application tools'),
+('Concrete & Masonry', 'Concrete, cement, and masonry supplies'),
+('Lumber & Wood', 'Lumber, plywood, and wood products');
 */
 ?>
