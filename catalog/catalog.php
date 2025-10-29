@@ -1,4 +1,8 @@
 <?php
+    require_once 'auth_check.php';
+?>
+
+<?php
     $title = "MjiPhil Catalog";
 ?>
 
