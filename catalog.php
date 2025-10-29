@@ -17,11 +17,11 @@
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="../components/components-style.css">
+        <link rel="stylesheet" href="./styles/components.css">
     </head>
     
     <body>
-        <?php include '../components/menu.php'; ?>
+        <?php include './menu.php'; ?>
         
         <div class="main-content">
             <div class="container-fluid">
