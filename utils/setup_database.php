@@ -52,7 +52,9 @@ class DatabaseSetup {
                 email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 phone VARCHAR(20),
-                role ENUM('admin', 'regular') DEFAULT 'regular'
+                role ENUM('admin', 'regular') DEFAULT 'regular',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )",
             
             "CREATE TABLE IF NOT EXISTS address (
@@ -62,14 +64,18 @@ class DatabaseSetup {
                 city VARCHAR(100) NOT NULL,
                 province VARCHAR(100) NOT NULL,
                 postal_code VARCHAR(20) NOT NULL,
+                is_default BOOLEAN DEFAULT FALSE,
+                address_type ENUM('billing', 'shipping', 'both') DEFAULT 'both',
                 FOREIGN KEY (user_id) REFERENCES user(user_id)
-                    ON DELETE CASCADE ON UPDATE CASCADE
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id)
             )",
             
             "CREATE TABLE IF NOT EXISTS category (
                 category_id INT AUTO_INCREMENT PRIMARY KEY,
                 category_name VARCHAR(100) NOT NULL UNIQUE,
-                description TEXT
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )",
             
             "CREATE TABLE IF NOT EXISTS product (
@@ -78,29 +84,68 @@ class DatabaseSetup {
                 product_name VARCHAR(150) NOT NULL,
                 description TEXT,
                 price DECIMAL(10,2) NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (category_id) REFERENCES category(category_id)
-                    ON DELETE RESTRICT ON UPDATE CASCADE
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_category_id (category_id),
+                INDEX idx_is_active (is_active)
             )",
             
             "CREATE TABLE IF NOT EXISTS product_image (
                 image_id INT AUTO_INCREMENT PRIMARY KEY,
                 product_id INT NOT NULL,
                 image_url VARCHAR(255) NOT NULL,
+                is_primary BOOLEAN DEFAULT FALSE,
+                alt_text VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (product_id) REFERENCES product(product_id)
-                    ON DELETE CASCADE ON UPDATE CASCADE
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_product_id (product_id),
+                INDEX idx_is_primary (is_primary)
             )",
             
             "CREATE TABLE IF NOT EXISTS inventory (
                 inventory_id INT AUTO_INCREMENT PRIMARY KEY,
                 product_id INT UNIQUE NOT NULL,
                 stock_quantity INT DEFAULT 0,
+                low_stock_threshold INT DEFAULT 10,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (product_id) REFERENCES product(product_id)
                     ON DELETE CASCADE ON UPDATE CASCADE
             )",
             
+            "CREATE TABLE IF NOT EXISTS cart (
+                cart_id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(user_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS cart_item (
+                cart_item_id INT AUTO_INCREMENT PRIMARY KEY,
+                cart_id INT NOT NULL,
+                product_id INT NOT NULL,
+                quantity INT NOT NULL CHECK (quantity > 0),
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (cart_id) REFERENCES cart(cart_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES product(product_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                UNIQUE KEY unique_cart_product (cart_id, product_id),
+                INDEX idx_cart_id (cart_id),
+                INDEX idx_product_id (product_id)
+            )",
+            
             "CREATE TABLE IF NOT EXISTS order_status (
                 order_status_id INT AUTO_INCREMENT PRIMARY KEY,
-                status_name ENUM('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled') NOT NULL
+                status_name ENUM('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled') NOT NULL UNIQUE,
+                description VARCHAR(255)
             )",
             
             "CREATE TABLE IF NOT EXISTS `order` (
@@ -109,27 +154,41 @@ class DatabaseSetup {
                 order_status_id INT NOT NULL,
                 order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 total_amount DECIMAL(10,2) NOT NULL,
+                shipping_address_id INT,
+                billing_address_id INT,
+                notes TEXT,
                 FOREIGN KEY (user_id) REFERENCES user(user_id)
                     ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (order_status_id) REFERENCES order_status(order_status_id)
-                    ON DELETE RESTRICT ON UPDATE CASCADE
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                FOREIGN KEY (shipping_address_id) REFERENCES address(address_id)
+                    ON DELETE SET NULL ON UPDATE CASCADE,
+                FOREIGN KEY (billing_address_id) REFERENCES address(address_id)
+                    ON DELETE SET NULL ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id),
+                INDEX idx_order_date (order_date),
+                INDEX idx_order_status (order_status_id)
             )",
             
             "CREATE TABLE IF NOT EXISTS order_item (
                 order_item_id INT AUTO_INCREMENT PRIMARY KEY,
                 order_id INT NOT NULL,
                 product_id INT NOT NULL,
-                quantity INT NOT NULL,
+                quantity INT NOT NULL CHECK (quantity > 0),
+                unit_price DECIMAL(10,2) NOT NULL,
                 subtotal DECIMAL(10,2) NOT NULL,
                 FOREIGN KEY (order_id) REFERENCES `order`(order_id)
                     ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (product_id) REFERENCES product(product_id)
-                    ON DELETE RESTRICT ON UPDATE CASCADE
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_order_id (order_id),
+                INDEX idx_product_id (product_id)
             )",
             
             "CREATE TABLE IF NOT EXISTS payment_method (
                 payment_method_id INT AUTO_INCREMENT PRIMARY KEY,
-                method_name ENUM('Cash', 'GCash', 'Bank Transfer', 'Credit Card') NOT NULL
+                method_name ENUM('Cash', 'GCash', 'Bank Transfer', 'Credit Card') NOT NULL UNIQUE,
+                description VARCHAR(255)
             )",
             
             "CREATE TABLE IF NOT EXISTS payment (
@@ -139,10 +198,14 @@ class DatabaseSetup {
                 amount_paid DECIMAL(10,2) NOT NULL,
                 payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 payment_status ENUM('Pending', 'Confirmed', 'Refunded') DEFAULT 'Pending',
+                transaction_reference VARCHAR(100),
+                notes TEXT,
                 FOREIGN KEY (order_id) REFERENCES `order`(order_id)
                     ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (payment_method_id) REFERENCES payment_method(payment_method_id)
-                    ON DELETE RESTRICT ON UPDATE CASCADE
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_order_id (order_id),
+                INDEX idx_payment_date (payment_date)
             )",
             
             "CREATE TABLE IF NOT EXISTS user_payment_method (
@@ -150,10 +213,14 @@ class DatabaseSetup {
                 user_id INT NOT NULL,
                 payment_method_id INT NOT NULL,
                 account_identifier VARCHAR(100),
+                is_default BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(user_id)
                     ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (payment_method_id) REFERENCES payment_method(payment_method_id)
-                    ON DELETE RESTRICT ON UPDATE CASCADE
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id),
+                UNIQUE KEY unique_user_payment (user_id, payment_method_id, account_identifier)
             )"
         ];
         
@@ -199,18 +266,31 @@ class DatabaseSetup {
             $stmt->execute($category);
         }
         
-        // Insert order statuses
-        $statuses = ['Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled'];
-        $stmt = $this->pdo->prepare("INSERT IGNORE INTO order_status (status_name) VALUES (?)");
+        // Insert order statuses with descriptions
+        $statuses = [
+            ['Pending', 'Order has been placed but not yet paid'],
+            ['Paid', 'Payment has been confirmed'],
+            ['Shipped', 'Order has been shipped to customer'],
+            ['Completed', 'Order has been delivered and completed'],
+            ['Cancelled', 'Order has been cancelled']
+        ];
+        
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO order_status (status_name, description) VALUES (?, ?)");
         foreach ($statuses as $status) {
-            $stmt->execute([$status]);
+            $stmt->execute($status);
         }
         
-        // Insert payment methods
-        $methods = ['Cash', 'GCash', 'Bank Transfer', 'Credit Card'];
-        $stmt = $this->pdo->prepare("INSERT IGNORE INTO payment_method (method_name) VALUES (?)");
+        // Insert payment methods with descriptions
+        $methods = [
+            ['Cash', 'Cash on delivery or pickup'],
+            ['GCash', 'GCash mobile payment'],
+            ['Bank Transfer', 'Bank transfer or deposit'],
+            ['Credit Card', 'Credit card payment']
+        ];
+        
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO payment_method (method_name, description) VALUES (?, ?)");
         foreach ($methods as $method) {
-            $stmt->execute([$method]);
+            $stmt->execute($method);
         }
         
         echo "Default data inserted successfully.<br>";
@@ -224,7 +304,7 @@ class DatabaseSetup {
             if (isset($jsonData['products'])) {
                 $productStmt = $this->pdo->prepare("INSERT IGNORE INTO product (category_id, product_name, description, price) VALUES (?, ?, ?, ?)");
                 $inventoryStmt = $this->pdo->prepare("INSERT IGNORE INTO inventory (product_id, stock_quantity) VALUES (?, ?)");
-                $imageStmt = $this->pdo->prepare("INSERT IGNORE INTO product_image (product_id, image_url) VALUES (?, ?)");
+                $imageStmt = $this->pdo->prepare("INSERT IGNORE INTO product_image (product_id, image_url, is_primary) VALUES (?, ?, ?)");
                 
                 foreach ($jsonData['products'] as $product) {
                     // Get category ID
@@ -246,7 +326,7 @@ class DatabaseSetup {
                             $inventoryStmt->execute([$product_id, $product['stock_quantity']]);
                             
                             if (!empty($product['image_url'])) {
-                                $imageStmt->execute([$product_id, $product['image_url']]);
+                                $imageStmt->execute([$product_id, $product['image_url'], TRUE]);
                             }
                         }
                     }
