@@ -1,240 +1,316 @@
-class CatalogManager {
-    constructor() {
-        this.products = [];
-        this.filteredProducts = [];
-        this.currentCategory = '';
-        this.currentSort = 'name';
-        this.searchTerm = '';
-        this.cart = JSON.parse(localStorage.getItem('cart')) || [];
+(function() {
+    const sidebar = document.querySelector('.product-details-sidebar');
+    const cartPopup = document.querySelector('.shopping-cart-popup');
+    const overlay = document.querySelector('.overlay');
+    const quantityDisplay = document.querySelector('.quantity-display');
+    const addToCartBtn = document.querySelector('.add-to-cart');
+    const increaseBtn = document.querySelector('.increase-quantity');
+    const decreaseBtn = document.querySelector('.decrease-quantity');
+    const mainCartBtn = document.querySelector('.main-cart-btn');
+    const cartCountBadge = document.querySelector('.cart-count');
+    let currentProduct = null;
+    let cart = [];
+    let currentQuantity = 1;
 
-        this.init();
+    // Function to update cart count badge
+    function updateCartCount() {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        cartCountBadge.textContent = totalItems;
+        cartCountBadge.style.display = totalItems > 0 ? 'inline-block' : 'none';
     }
 
-    init() {
-        this.loadProducts();
-        this.setupEventListeners();
-        this.updateCartBadge();
-    }
-
-    async loadProducts() {
-        try {
-            this.showLoading(true);
-            const response = await fetch('./api/get_products.php');
-            const data = await response.json();
-
-            if (data.success) {
-                this.products = data.products;
-                this.filterAndRender();
-            } else {
-                throw new Error(data.message || 'Failed to load products');
-            }
-        } catch (error) {
-            console.error('Error loading products:', error);
-            this.showError('Failed to load products');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-
-    filterAndRender() {
-        // Filter by search term
-        this.filteredProducts = this.products.filter(product => {
-            const matchesSearch = !this.searchTerm || 
-                product.product_name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-                product.description.toLowerCase().includes(this.searchTerm.toLowerCase());
+    function updateCart() {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+        
+        let subtotal = 0;
+        cart.forEach(item => {
+            const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
+            subtotal += price * item.quantity;
             
-            const matchesCategory = !this.currentCategory || 
-                product.category_name === this.currentCategory;
-
-            return matchesSearch && matchesCategory;
+            cartItems.innerHTML += `
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3">
+                            <div class="product-placeholder" style="width:60px; height:60px;">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">${item.name}</h6>
+                                <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
+                            <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        // Sort products
-        this.sortProducts();
+        const shipping = 120;
+        const tax = subtotal * 0.12;
+        const total = subtotal + shipping + tax;
 
-        // Render products
-        this.renderProducts();
-    }
+        document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
+        document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
+        document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
+        document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
 
-    sortProducts() {
-        switch (this.currentSort) {
-            case 'price_low':
-                this.filteredProducts.sort((a, b) => a.price - b.price);
-                break;
-            case 'price_high':
-                this.filteredProducts.sort((a, b) => b.price - a.price);
-                break;
-            case 'name':
-            default:
-                this.filteredProducts.sort((a, b) => a.product_name.localeCompare(b.product_name));
-                break;
-        }
-    }
-
-    renderProducts() {
-        const container = document.getElementById('productsContainer');
-        
-        if (this.filteredProducts.length === 0) {
-            document.getElementById('noProducts').style.display = 'block';
-            container.innerHTML = '';
-            return;
-        }
-
-        document.getElementById('noProducts').style.display = 'none';
-
-        container.innerHTML = this.filteredProducts.map(product => `
-            <div class="product-card" data-product-id="${product.product_id}">
-                <div class="product-image">
-                    ${product.image_url ? 
-                        `<img src="${product.image_url}" alt="${product.product_name}" onerror="this.style.display='none'">` : 
-                        '<div class="no-image"><i class="fas fa-box"></i></div>'
-                    }
-                    ${product.stock_quantity === 0 ? '<div class="out-of-stock">Out of Stock</div>' : ''}
-                </div>
-                <div class="product-info">
-                    <h3 class="product-name">${product.product_name}</h3>
-                    <p class="product-description">${product.description}</p>
-                    <div class="product-meta">
-                        <span class="product-price">₱${parseFloat(product.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        <span class="product-stock">Stock: ${product.stock_quantity}</span>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-view" onclick="catalogManager.viewProduct(${product.product_id})">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button class="btn-cart ${product.stock_quantity === 0 ? 'disabled' : ''}" 
-                                onclick="catalogManager.addToCart(${product.product_id})" 
-                                ${product.stock_quantity === 0 ? 'disabled' : ''}>
-                            <i class="fas fa-shopping-cart"></i> Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    viewProduct(productId) {
-        const product = this.products.find(p => p.product_id === productId);
-        if (!product) return;
-
-        document.getElementById('modalProductName').textContent = product.product_name;
-        document.getElementById('modalProductDescription').textContent = product.description;
-        document.getElementById('modalProductPrice').textContent = `₱${parseFloat(product.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('modalProductStock').textContent = `Stock: ${product.stock_quantity}`;
-        
-        const imageElement = document.getElementById('modalProductImage');
-        if (product.image_url) {
-            imageElement.src = product.image_url;
-            imageElement.style.display = 'block';
-        } else {
-            imageElement.style.display = 'none';
-        }
-
-        document.getElementById('quantity').value = 1;
-        document.getElementById('quantity').max = product.stock_quantity;
-
-        // Update add to cart button
-        const addToCartBtn = document.getElementById('addToCartBtn');
-        if (product.stock_quantity === 0) {
-            addToCartBtn.disabled = true;
-            addToCartBtn.textContent = 'Out of Stock';
-        } else {
-            addToCartBtn.disabled = false;
-            addToCartBtn.textContent = 'Add to Cart';
-            addToCartBtn.onclick = () => this.addToCartFromModal(productId);
-        }
-
-        const modal = new bootstrap.Modal(document.getElementById('productModal'));
-        modal.show();
-    }
-
-    addToCart(productId) {
-        this.addToCartAction(productId, 1);
-    }
-
-    addToCartFromModal(productId) {
-        const quantity = parseInt(document.getElementById('quantity').value);
-        this.addToCartAction(productId, quantity);
-        
-        const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
-        modal.hide();
-    }
-
-    addToCartAction(productId, quantity) {
-        const product = this.products.find(p => p.product_id === productId);
-        if (!product || product.stock_quantity === 0) return;
-
-        const existingItem = this.cart.find(item => item.product_id === productId);
-        
-        if (existingItem) {
-            if (existingItem.quantity + quantity > product.stock_quantity) {
-                alert(`Cannot add more than available stock. Available: ${product.stock_quantity}`);
-                return;
-            }
-            existingItem.quantity += quantity;
-        } else {
-            this.cart.push({
-                product_id: productId,
-                product_name: product.product_name,
-                price: product.price,
-                image_url: product.image_url,
-                quantity: quantity,
-                max_quantity: product.stock_quantity
+        // Add remove functionality
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const name = e.currentTarget.dataset.name;
+                cart = cart.filter(item => item.name !== name);
+                updateCart();
             });
+        });
+    }
+
+    // Quantity control handlers
+    increaseBtn.addEventListener('click', () => {
+        currentQuantity++;
+        quantityDisplay.textContent = currentQuantity.toString();
+    });
+
+    decreaseBtn.addEventListener('click', () => {
+        if (currentQuantity > 1) {
+            currentQuantity--;
+            quantityDisplay.textContent = currentQuantity.toString();
         }
+    });
 
-        this.saveCart();
-        this.updateCartBadge();
-        this.showToast('Product added to cart!');
-    }
-
-    saveCart() {
-        localStorage.setItem('cart', JSON.stringify(this.cart));
-    }
-
-    updateCartBadge() {
-        const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
-        // You can update a cart badge element here if you have one
-        console.log('Cart updated:', totalItems, 'items');
-    }
-
-    showToast(message) {
-        // Simple toast notification - you can enhance this with a proper toast library
-        alert(message); // Replace with proper toast implementation
-    }
-
-    showLoading(show) {
-        document.getElementById('loadingSpinner').style.display = show ? 'flex' : 'none';
-    }
-
-    showError(message) {
-        // You can implement a proper error display
-        console.error(message);
-        alert(message);
-    }
-
-    setupEventListeners() {
-        // Search input
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            this.searchTerm = e.target.value;
-            this.filterAndRender();
+    function updateCartDisplay() {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+        
+        let subtotal = 0;
+        cart.forEach(item => {
+            const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
+            subtotal += price * item.quantity;
+            
+            cartItems.innerHTML += `
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3">
+                            <div class="product-placeholder" style="width:60px; height:60px;">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">${item.name}</h6>
+                                <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
+                            <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        // Category filter
-        document.getElementById('categoryFilter').addEventListener('change', (e) => {
-            this.currentCategory = e.target.value;
-            this.filterAndRender();
-        });
+        const shipping = 150;
+        const tax = subtotal * 0.12;
+        const total = subtotal + shipping + tax;
 
-        // Sort filter
-        document.getElementById('sortFilter').addEventListener('change', (e) => {
-            this.currentSort = e.target.value;
-            this.filterAndRender();
+        document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
+        document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
+        document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
+        document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
+
+        // Add remove functionality
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const name = e.currentTarget.dataset.name;
+                cart = cart.filter(item => item.name !== name);
+                updateCartDisplay();
+            });
         });
     }
-}
 
-// Initialize catalog manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.catalogManager = new CatalogManager();
-});
+    // Product Details
+    document.querySelectorAll('.view-product').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.product-card');
+            currentProduct = {
+                name: card.querySelector('.card-title').textContent,
+                price: card.querySelector('strong').textContent,
+                desc: card.querySelector('.text-muted').textContent,
+                category: card.dataset.cat,
+                quantity: 1
+            };
+            
+            // Reset and show controls
+            currentQuantity = 1;
+            quantityDisplay.textContent = '1';
+            addToCartBtn.style.display = 'block';
+            
+            document.getElementById('productTitle').textContent = currentProduct.name;
+            document.getElementById('productPrice').textContent = currentProduct.price;
+            document.getElementById('productDesc').textContent = currentProduct.desc;
+            
+            // Set category with fallback
+            document.getElementById('productCategory').textContent = currentProduct.category ? 
+                currentProduct.category.charAt(0).toUpperCase() + currentProduct.category.slice(1) : 
+                '<None>';
+            
+            // Set brand as <None> (not in database)
+            document.getElementById('productBrand').textContent = '<None>';
+            
+            // Set product code as <None> (not in database)
+            document.getElementById('productCode').textContent = '<None>';
+            
+            // Set weight as <None> (not in database)
+            document.getElementById('productWeight').textContent = '<None>';
+            
+            // Set technical specs as <None> (not in database)
+            document.getElementById('productSpecs').innerHTML = '<div><None></div>';
+            
+            sidebar.classList.add('active');
+        });
+    });
+
+    // Close sidebar
+    document.querySelector('.close-sidebar').addEventListener('click', () => {
+        sidebar.classList.remove('active');
+    });
+
+    // Add to cart
+    document.querySelector('.add-to-cart').addEventListener('click', () => {
+        if (currentProduct) {
+            const existingItem = cart.find(item => item.name === currentProduct.name);
+            if (existingItem) {
+                existingItem.quantity += currentQuantity;
+            } else {
+                cart.push({...currentProduct, quantity: currentQuantity});
+            }
+
+            // Show success feedback
+            const originalText = addToCartBtn.textContent;
+            addToCartBtn.textContent = 'Added to Cart!';
+            addToCartBtn.classList.add('btn-success');
+            setTimeout(() => {
+                addToCartBtn.textContent = originalText;
+                addToCartBtn.classList.remove('btn-success');
+            }, 2000);
+
+            // Update cart, badge and reset quantity
+            updateCart();
+            updateCartCount();
+            currentQuantity = 1;
+            quantityDisplay.textContent = '1';
+        }
+    });
+
+    // View cart from main button
+    mainCartBtn.addEventListener('click', () => {
+        updateCart();
+        cartPopup.classList.add('active');
+        overlay.classList.add('active');
+    });
+
+    // Close cart
+    document.querySelector('.close-cart').addEventListener('click', () => {
+        cartPopup.classList.remove('active');
+        overlay.classList.remove('active');
+    });
+
+    // Function to handle item removal
+    function removeFromCart(name) {
+        cart = cart.filter(item => item.name !== name);
+        updateCart();
+        updateCartCount();
+        
+        // If cart is empty, close the popup
+        if (cart.length === 0) {
+            cartPopup.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+    }
+
+    function updateCart() {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+
+        let subtotal = 0;
+        cart.forEach(item => {
+            const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
+            subtotal += price * item.quantity;
+
+            cartItems.innerHTML += `
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3">
+                            <div class="product-placeholder" style="width:60px; height:60px;">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">${item.name}</h6>
+                                <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
+                            <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const shipping = 150;
+        const tax = subtotal * 0.12;
+        const total = subtotal + shipping + tax;
+
+        document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
+        document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
+        document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
+        document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
+
+        // Update cart count badge to keep badge in sync
+        updateCartCount();
+
+        // Add remove functionality (use removeFromCart to keep behavior consistent)
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const name = e.currentTarget.dataset.name;
+                removeFromCart(name);
+            });
+        });
+    }
+})();
+
+(function(){
+    const search = document.getElementById('catalogSearch');
+    const chips = Array.from(document.querySelectorAll('.chip'));
+    const cards = Array.from(document.querySelectorAll('.product-card'));
+
+    function applyFilter() {
+        const q = (search.value||'').trim().toLowerCase();
+        const activeCat = chips.find(c=>c.classList.contains('active'))?.dataset.cat || 'all';
+        cards.forEach(card => {
+            const name = card.dataset.name || '';
+            const cat = card.dataset.cat || '';
+            const matchName = !q || name.indexOf(q) !== -1;
+            const matchCat = activeCat === 'all' || activeCat === cat;
+            card.style.display = (matchName && matchCat) ? '' : 'none';
+        });
+    }
+
+    search.addEventListener('input', applyFilter);
+    chips.forEach(c => {
+        c.addEventListener('click', () => {
+            chips.forEach(x=>x.classList.remove('active'));
+            c.classList.add('active');
+            applyFilter();
+        });
+    });
+})();

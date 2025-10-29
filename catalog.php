@@ -1,107 +1,101 @@
 <?php
     require_once 'auth_check.php';
-?>
-
-<?php
     $title = "MjiPhil Catalog";
-?>
+  require_once 'config.php';
 
-<?php
-require_once 'config.php';
+  // Get products from database with categories and images
+  try {
+      $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                      c.category_name, c.category_id,
+                      pi.image_url,
+                      i.stock_quantity
+                FROM product p
+                INNER JOIN category c ON p.category_id = c.category_id
+                LEFT JOIN product_image pi ON p.product_id = pi.product_id
+                LEFT JOIN inventory i ON p.product_id = i.product_id
+                WHERE i.stock_quantity > 0
+                ORDER BY p.product_name";
+      
+      $stmt = $pdo->query($query);
+      $products = $stmt->fetchAll();
+      
+      // Group products by category for the catalog display
+      $categorized_products = [];
+      foreach ($products as $product) {
+          $categorized_products[$product['category_name']][] = $product;
+      }
+      
+  } catch (PDOException $e) {
+      error_log("Error loading products: " . $e->getMessage());
+      $categorized_products = [];
+  }
 
-// Get products from database with categories and images
-try {
-    $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
-                     c.category_name, c.category_id,
-                     pi.image_url,
-                     i.stock_quantity
-              FROM product p
-              INNER JOIN category c ON p.category_id = c.category_id
-              LEFT JOIN product_image pi ON p.product_id = pi.product_id
-              LEFT JOIN inventory i ON p.product_id = i.product_id
-              WHERE i.stock_quantity > 0
-              ORDER BY p.product_name";
-    
-    $stmt = $pdo->query($query);
-    $products = $stmt->fetchAll();
-    
-    // Group products by category for the catalog display
-    $categorized_products = [];
-    foreach ($products as $product) {
-        $categorized_products[$product['category_name']][] = $product;
-    }
-    
-} catch (PDOException $e) {
-    error_log("Error loading products: " . $e->getMessage());
-    $categorized_products = [];
-}
+  // Get categories for filter
+  try {
+      $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
+      $categories = $stmt->fetchAll();
+  } catch (PDOException $e) {
+      error_log("Error loading categories: " . $e->getMessage());
+      $categories = [];
+  }
 
-// Get categories for filter
-try {
-    $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
-    $categories = $stmt->fetchAll();
-} catch (PDOException $e) {
-    error_log("Error loading categories: " . $e->getMessage());
-    $categories = [];
-}
+  // Handle search and filter
+  $search = $_GET['search'] ?? '';
+  $category_filter = $_GET['category'] ?? '';
+  $price_filter = $_GET['price'] ?? '';
 
-// Handle search and filter
-$search = $_GET['search'] ?? '';
-$category_filter = $_GET['category'] ?? '';
-$price_filter = $_GET['price'] ?? '';
-
-// Build filtered products if search or filter is applied
-$filtered_products = [];
-if (!empty($search) || !empty($category_filter) || !empty($price_filter)) {
-    $filter_query = "SELECT p.product_id, p.product_name, p.description, p.price, 
-                            c.category_name, c.category_id,
-                            pi.image_url,
-                            i.stock_quantity
-                     FROM product p
-                     INNER JOIN category c ON p.category_id = c.category_id
-                     LEFT JOIN product_image pi ON p.product_id = pi.product_id
-                     LEFT JOIN inventory i ON p.product_id = i.product_id
-                     WHERE i.stock_quantity > 0";
-    
-    $params = [];
-    
-    if (!empty($search)) {
-        $filter_query .= " AND (p.product_name LIKE ? OR p.description LIKE ?)";
-        $search_term = "%$search%";
-        $params[] = $search_term;
-        $params[] = $search_term;
-    }
-    
-    if (!empty($category_filter)) {
-        $filter_query .= " AND c.category_id = ?";
-        $params[] = $category_filter;
-    }
-    
-    if (!empty($price_filter)) {
-        switch ($price_filter) {
-            case 'low':
-                $filter_query .= " AND p.price <= 500";
-                break;
-            case 'medium':
-                $filter_query .= " AND p.price > 500 AND p.price <= 2000";
-                break;
-            case 'high':
-                $filter_query .= " AND p.price > 2000";
-                break;
-        }
-    }
-    
-    $filter_query .= " ORDER BY p.product_name";
-    
-    try {
-        $stmt = $pdo->prepare($filter_query);
-        $stmt->execute($params);
-        $filtered_products = $stmt->fetchAll();
-    } catch (PDOException $e) {
-        error_log("Error filtering products: " . $e->getMessage());
-        $filtered_products = [];
-    }
-}
+  // Build filtered products if search or filter is applied
+  $filtered_products = [];
+  if (!empty($search) || !empty($category_filter) || !empty($price_filter)) {
+      $filter_query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                              c.category_name, c.category_id,
+                              pi.image_url,
+                              i.stock_quantity
+                      FROM product p
+                      INNER JOIN category c ON p.category_id = c.category_id
+                      LEFT JOIN product_image pi ON p.product_id = pi.product_id
+                      LEFT JOIN inventory i ON p.product_id = i.product_id
+                      WHERE i.stock_quantity > 0";
+      
+      $params = [];
+      
+      if (!empty($search)) {
+          $filter_query .= " AND (p.product_name LIKE ? OR p.description LIKE ?)";
+          $search_term = "%$search%";
+          $params[] = $search_term;
+          $params[] = $search_term;
+      }
+      
+      if (!empty($category_filter)) {
+          $filter_query .= " AND c.category_id = ?";
+          $params[] = $category_filter;
+      }
+      
+      if (!empty($price_filter)) {
+          switch ($price_filter) {
+              case 'low':
+                  $filter_query .= " AND p.price <= 500";
+                  break;
+              case 'medium':
+                  $filter_query .= " AND p.price > 500 AND p.price <= 2000";
+                  break;
+              case 'high':
+                  $filter_query .= " AND p.price > 2000";
+                  break;
+          }
+      }
+      
+      $filter_query .= " ORDER BY p.product_name";
+      
+      try {
+          $stmt = $pdo->prepare($filter_query);
+          $stmt->execute($params);
+          $filtered_products = $stmt->fetchAll();
+      } catch (PDOException $e) {
+          error_log("Error filtering products: " . $e->getMessage());
+          $filtered_products = [];
+      }
+  }
 ?>
 
 <!DOCTYPE html>
@@ -394,6 +388,6 @@ if (!empty($search) || !empty($category_filter) || !empty($price_filter)) {
                 </div>
             </div>
         </div>
-        <script src='./scripts/detailscart.js'></script>
+        <script src='./scripts/catalog.js'></script>
     </body>
 </html>
