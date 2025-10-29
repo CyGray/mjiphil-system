@@ -6,6 +6,104 @@
     $title = "MjiPhil Catalog";
 ?>
 
+<?php
+require_once 'config.php';
+
+// Get products from database with categories and images
+try {
+    $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                     c.category_name, c.category_id,
+                     pi.image_url,
+                     i.stock_quantity
+              FROM product p
+              INNER JOIN category c ON p.category_id = c.category_id
+              LEFT JOIN product_image pi ON p.product_id = pi.product_id
+              LEFT JOIN inventory i ON p.product_id = i.product_id
+              WHERE i.stock_quantity > 0
+              ORDER BY p.product_name";
+    
+    $stmt = $pdo->query($query);
+    $products = $stmt->fetchAll();
+    
+    // Group products by category for the catalog display
+    $categorized_products = [];
+    foreach ($products as $product) {
+        $categorized_products[$product['category_name']][] = $product;
+    }
+    
+} catch (PDOException $e) {
+    error_log("Error loading products: " . $e->getMessage());
+    $categorized_products = [];
+}
+
+// Get categories for filter
+try {
+    $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
+    $categories = $stmt->fetchAll();
+} catch (PDOException $e) {
+    error_log("Error loading categories: " . $e->getMessage());
+    $categories = [];
+}
+
+// Handle search and filter
+$search = $_GET['search'] ?? '';
+$category_filter = $_GET['category'] ?? '';
+$price_filter = $_GET['price'] ?? '';
+
+// Build filtered products if search or filter is applied
+$filtered_products = [];
+if (!empty($search) || !empty($category_filter) || !empty($price_filter)) {
+    $filter_query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                            c.category_name, c.category_id,
+                            pi.image_url,
+                            i.stock_quantity
+                     FROM product p
+                     INNER JOIN category c ON p.category_id = c.category_id
+                     LEFT JOIN product_image pi ON p.product_id = pi.product_id
+                     LEFT JOIN inventory i ON p.product_id = i.product_id
+                     WHERE i.stock_quantity > 0";
+    
+    $params = [];
+    
+    if (!empty($search)) {
+        $filter_query .= " AND (p.product_name LIKE ? OR p.description LIKE ?)";
+        $search_term = "%$search%";
+        $params[] = $search_term;
+        $params[] = $search_term;
+    }
+    
+    if (!empty($category_filter)) {
+        $filter_query .= " AND c.category_id = ?";
+        $params[] = $category_filter;
+    }
+    
+    if (!empty($price_filter)) {
+        switch ($price_filter) {
+            case 'low':
+                $filter_query .= " AND p.price <= 500";
+                break;
+            case 'medium':
+                $filter_query .= " AND p.price > 500 AND p.price <= 2000";
+                break;
+            case 'high':
+                $filter_query .= " AND p.price > 2000";
+                break;
+        }
+    }
+    
+    $filter_query .= " ORDER BY p.product_name";
+    
+    try {
+        $stmt = $pdo->prepare($filter_query);
+        $stmt->execute($params);
+        $filtered_products = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error filtering products: " . $e->getMessage());
+        $filtered_products = [];
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -124,74 +222,95 @@
                         </div>
 
                         <div class="row" id="productGrid">
-                          <?php
-                          // sample static products — backend will replace this later
-                          $products = [
-                            ['name'=>'ProBuild Premium Cement (50kg)','price'=>'₱280.00','desc'=>'High-grade cement for durable construction.','cat'=>'materials'],
-                            ['name'=>'VoltMax Cordless Drill 20V','price'=>'₱3,450.00','desc'=>'Lightweight cordless drill with 2-speed settings.','cat'=>'tools'],
-                            ['name'=>'Steel Rebar 16mm (Grade 60)','price'=>'₱750.00','desc'=>'Rust-resistant rebar for reinforced concrete.','cat'=>'materials'],
-                            ['name'=>'BuildTuff Hollow Blocks (4x8x16 in)','price'=>'₱18.00','desc'=>'Pre-molded concrete for easy laying.','cat'=>'materials'],
-                            ['name'=>'Duracore Safety Helmet — Yellow','price'=>'₱295.00','desc'=>'Impact-resistant hard hat with vents.','cat'=>'safety'],
-                            ['name'=>'QuickSeal Waterproofing Paint','price'=>'₱295.00','desc'=>'Long-lasting waterproof finish for roofs and walls.','cat'=>'materials'],
-                            ['name'=>'TorquePlus Angle Grinder 4” 750W','price'=>'₱295.00','desc'=>'Compact grinder for cutting and polishing.','cat'=>'tools'],
-                            ['name'=>'CemX Ready-Mix Concrete (1m³)','price'=>'₱4,200.00','desc'=>'Pre-mixed concrete for ready pours.','cat'=>'materials'],
-                          ];
-
-                          foreach ($products as $p) {
+                        <?php             
+                            try {
+                                // Fetch products from database with categories
+                                $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                                                c.category_name
+                                          FROM product p
+                                          INNER JOIN category c ON p.category_id = c.category_id
+                                          LEFT JOIN inventory i ON p.product_id = i.product_id
+                                          WHERE i.stock_quantity > 0
+                                          ORDER BY p.product_name";
+                                
+                                $stmt = $pdo->query($query);
+                                $products = $stmt->fetchAll();
+                                
+                                // Map category names to your existing category slugs
+                                $categoryMap = [
+                                    'Tools' => 'tools',
+                                    'Materials' => 'materials',
+                                    'Safety Gear' => 'safety',
+                                    'Essentials' => 'materials',
+                                    'Electrical' => 'tools',
+                                    'Plumbing' => 'materials',
+                                    'Hardware' => 'tools',
+                                    'Paint & Supplies' => 'materials',
+                                    'Concrete & Masonry' => 'materials',
+                                    'Lumber & Wood' => 'materials'
+                                ];
+                                
+                                foreach ($products as $p) {
+                                    $catSlug = $categoryMap[$p['category_name']] ?? 'materials';
+                                    ?>
+                                    <div class="col-6 col-md-4 col-lg-3 mb-4 product-card" 
+                                        data-name="<?php echo strtolower($p['product_name']); ?>" 
+                                        data-cat="<?php echo $catSlug; ?>"
+                                        data-price="<?php echo $p['price']; ?>"
+                                        data-desc="<?php echo htmlspecialchars($p['description']); ?>">
+                                        <div class="card h-100 shadow-sm">
+                                            <div class="card-body d-flex flex-column">
+                                                <div class="product-placeholder mb-3">
+                                                    <!-- image placeholder (ignore actual images for now) -->
+                                                    <i class="bi bi-box-seam" style="font-size:28px;"></i>
+                                                </div>
+                                                <h6 class="card-title mb-1" style="font-size:.98rem;"><?php echo htmlspecialchars($p['product_name']); ?></h6>
+                                                <p class="text-muted small mb-3"><?php echo htmlspecialchars($p['description']); ?></p>
+                                                <div class="mt-auto d-flex justify-content-between align-items-center">
+                                                    <strong class="text-dark">₱<?php echo number_format($p['price'], 2); ?></strong>
+                                                    <button class="btn btn-sm view-product" style="background-color: #6b0f0f; color: white;">View</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php
+                                }
+                                
+                            } catch (PDOException $e) {
+                                error_log("Error loading products: " . $e->getMessage());
+                                echo '<div class="col-12 text-center text-muted">Unable to load products at this time.</div>';
+                            }
                             ?>
-                            <div class="col-6 col-md-4 col-lg-3 mb-4 product-card" 
-                                data-name="<?php echo strtolower($p['name']); ?>" 
-                                data-cat="<?php echo $p['cat']; ?>"
-                                data-price="<?php echo $p['price']; ?>"
-                                data-desc="<?php echo $p['desc']; ?>">
-                              <div class="card h-100 shadow-sm">
-                                <div class="card-body d-flex flex-column">
-                                  <div class="product-placeholder mb-3">
-                                    <!-- image placeholder (ignore actual images for now) -->
-                                    <i class="bi bi-box-seam" style="font-size:28px;"></i>
-                                  </div>
-                                  <h6 class="card-title mb-1" style="font-size:.98rem;"><?php echo $p['name']; ?></h6>
-                                  <p class="text-muted small mb-3"><?php echo $p['desc']; ?></p>
-                                  <div class="mt-auto d-flex justify-content-between align-items-center">
-                                    <strong class="text-dark"><?php echo $p['price']; ?></strong>
-                                    <button class="btn btn-sm view-product" style="background-color: #6b0f0f; color: white;">View</button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <?php
-                          }
-                          ?>
                         </div>
 
                         <script>
-                          // simple client-side search + category filter
-                          (function(){
-                            const search = document.getElementById('catalogSearch');
-                            const chips = Array.from(document.querySelectorAll('.chip'));
-                            const cards = Array.from(document.querySelectorAll('.product-card'));
+                            // simple client-side search + category filter
+                            (function(){
+                                const search = document.getElementById('catalogSearch');
+                                const chips = Array.from(document.querySelectorAll('.chip'));
+                                const cards = Array.from(document.querySelectorAll('.product-card'));
 
-                            function applyFilter() {
-                              const q = (search.value||'').trim().toLowerCase();
-                              const activeCat = chips.find(c=>c.classList.contains('active'))?.dataset.cat || 'all';
-                              cards.forEach(card => {
-                                const name = card.dataset.name || '';
-                                const cat = card.dataset.cat || '';
-                                const matchName = !q || name.indexOf(q) !== -1;
-                                const matchCat = activeCat === 'all' || activeCat === cat;
-                                card.style.display = (matchName && matchCat) ? '' : 'none';
-                              });
-                            }
+                                function applyFilter() {
+                                    const q = (search.value||'').trim().toLowerCase();
+                                    const activeCat = chips.find(c=>c.classList.contains('active'))?.dataset.cat || 'all';
+                                    cards.forEach(card => {
+                                        const name = card.dataset.name || '';
+                                        const cat = card.dataset.cat || '';
+                                        const matchName = !q || name.indexOf(q) !== -1;
+                                        const matchCat = activeCat === 'all' || activeCat === cat;
+                                        card.style.display = (matchName && matchCat) ? '' : 'none';
+                                    });
+                                }
 
-                            search.addEventListener('input', applyFilter);
-                            chips.forEach(c => {
-                              c.addEventListener('click', () => {
-                                chips.forEach(x=>x.classList.remove('active'));
-                                c.classList.add('active');
-                                applyFilter();
-                              });
-                            });
-                          })();
+                                search.addEventListener('input', applyFilter);
+                                chips.forEach(c => {
+                                    c.addEventListener('click', () => {
+                                        chips.forEach(x=>x.classList.remove('active'));
+                                        c.classList.add('active');
+                                        applyFilter();
+                                    });
+                                });
+                            })();
                         </script>
 
                         <!-- Product Details Sidebar -->
@@ -304,395 +423,295 @@
                         <script>
                           // Product Details and Shopping Cart functionality
                           (function() {
-                            const sidebar = document.querySelector('.product-details-sidebar');
-                            const cartPopup = document.querySelector('.shopping-cart-popup');
-                            const overlay = document.querySelector('.overlay');
-                            const quantityDisplay = document.querySelector('.quantity-display');
-                            const addToCartBtn = document.querySelector('.add-to-cart');
-                            const increaseBtn = document.querySelector('.increase-quantity');
-                            const decreaseBtn = document.querySelector('.decrease-quantity');
-                            const mainCartBtn = document.querySelector('.main-cart-btn');
-                            const cartCountBadge = document.querySelector('.cart-count');
-                            let currentProduct = null;
-                            let cart = [];
-                            let currentQuantity = 1;
+                              const sidebar = document.querySelector('.product-details-sidebar');
+                              const cartPopup = document.querySelector('.shopping-cart-popup');
+                              const overlay = document.querySelector('.overlay');
+                              const quantityDisplay = document.querySelector('.quantity-display');
+                              const addToCartBtn = document.querySelector('.add-to-cart');
+                              const increaseBtn = document.querySelector('.increase-quantity');
+                              const decreaseBtn = document.querySelector('.decrease-quantity');
+                              const mainCartBtn = document.querySelector('.main-cart-btn');
+                              const cartCountBadge = document.querySelector('.cart-count');
+                              let currentProduct = null;
+                              let cart = [];
+                              let currentQuantity = 1;
 
-                            // Function to update cart count badge
-                            function updateCartCount() {
-                              const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-                              cartCountBadge.textContent = totalItems;
-                              cartCountBadge.style.display = totalItems > 0 ? 'inline-block' : 'none';
-                            }
+                              // Function to update cart count badge
+                              function updateCartCount() {
+                                  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                                  cartCountBadge.textContent = totalItems;
+                                  cartCountBadge.style.display = totalItems > 0 ? 'inline-block' : 'none';
+                              }
 
-                            function updateCart() {
-                              const cartItems = document.getElementById('cartItems');
-                              cartItems.innerHTML = '';
-                              
-                              let subtotal = 0;
-                              cart.forEach(item => {
-                                const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
-                                subtotal += price * item.quantity;
-                                
-                                cartItems.innerHTML += `
-                                  <div class="border-bottom pb-3 mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                      <div class="d-flex gap-3">
-                                        <div class="product-placeholder" style="width:60px; height:60px;">
-                                          <i class="bi bi-box-seam"></i>
-                                        </div>
-                                        <div>
-                                          <h6 class="mb-1">${item.name}</h6>
-                                          <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
-                                        </div>
-                                      </div>
-                                      <div class="text-end">
-                                        <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
-                                        <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
-                                          <i class="bi bi-trash"></i>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                `;
+                              function updateCart() {
+                                  const cartItems = document.getElementById('cartItems');
+                                  cartItems.innerHTML = '';
+                                  
+                                  let subtotal = 0;
+                                  cart.forEach(item => {
+                                      const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
+                                      subtotal += price * item.quantity;
+                                      
+                                      cartItems.innerHTML += `
+                                          <div class="border-bottom pb-3 mb-3">
+                                              <div class="d-flex justify-content-between align-items-center">
+                                                  <div class="d-flex gap-3">
+                                                      <div class="product-placeholder" style="width:60px; height:60px;">
+                                                          <i class="bi bi-box-seam"></i>
+                                                      </div>
+                                                      <div>
+                                                          <h6 class="mb-1">${item.name}</h6>
+                                                          <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
+                                                      </div>
+                                                  </div>
+                                                  <div class="text-end">
+                                                      <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
+                                                      <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
+                                                          <i class="bi bi-trash"></i>
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      `;
+                                  });
+
+                                  const shipping = 150;
+                                  const tax = subtotal * 0.12;
+                                  const total = subtotal + shipping + tax;
+
+                                  document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
+                                  document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
+                                  document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
+                                  document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
+
+                                  // Add remove functionality
+                                  document.querySelectorAll('.remove-item').forEach(btn => {
+                                      btn.addEventListener('click', (e) => {
+                                          const name = e.currentTarget.dataset.name;
+                                          cart = cart.filter(item => item.name !== name);
+                                          updateCart();
+                                      });
+                                  });
+                              }
+
+                              // Quantity control handlers
+                              increaseBtn.addEventListener('click', () => {
+                                  currentQuantity++;
+                                  quantityDisplay.textContent = currentQuantity.toString();
                               });
 
-                              const shipping = 150;
-                              const tax = subtotal * 0.12;
-                              const total = subtotal + shipping + tax;
+                              decreaseBtn.addEventListener('click', () => {
+                                  if (currentQuantity > 1) {
+                                      currentQuantity--;
+                                      quantityDisplay.textContent = currentQuantity.toString();
+                                  }
+                              });
 
-                              document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
-                              document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
-                              document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
-                              document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
+                              function updateCartDisplay() {
+                                  const cartItems = document.getElementById('cartItems');
+                                  cartItems.innerHTML = '';
+                                  
+                                  let subtotal = 0;
+                                  cart.forEach(item => {
+                                      const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
+                                      subtotal += price * item.quantity;
+                                      
+                                      cartItems.innerHTML += `
+                                          <div class="border-bottom pb-3 mb-3">
+                                              <div class="d-flex justify-content-between align-items-center">
+                                                  <div class="d-flex gap-3">
+                                                      <div class="product-placeholder" style="width:60px; height:60px;">
+                                                          <i class="bi bi-box-seam"></i>
+                                                      </div>
+                                                      <div>
+                                                          <h6 class="mb-1">${item.name}</h6>
+                                                          <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
+                                                      </div>
+                                                  </div>
+                                                  <div class="text-end">
+                                                      <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
+                                                      <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
+                                                          <i class="bi bi-trash"></i>
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      `;
+                                  });
 
-                              // Add remove functionality
-                              document.querySelectorAll('.remove-item').forEach(btn => {
-                                btn.addEventListener('click', (e) => {
-                                  const name = e.currentTarget.dataset.name;
+                                  const shipping = 150;
+                                  const tax = subtotal * 0.12;
+                                  const total = subtotal + shipping + tax;
+
+                                  document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
+                                  document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
+                                  document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
+                                  document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
+
+                                  // Add remove functionality
+                                  document.querySelectorAll('.remove-item').forEach(btn => {
+                                      btn.addEventListener('click', (e) => {
+                                          const name = e.currentTarget.dataset.name;
+                                          cart = cart.filter(item => item.name !== name);
+                                          updateCartDisplay();
+                                      });
+                                  });
+                              }
+
+                              // Product Details
+                              document.querySelectorAll('.view-product').forEach(btn => {
+                                  btn.addEventListener('click', (e) => {
+                                      const card = e.target.closest('.product-card');
+                                      currentProduct = {
+                                          name: card.querySelector('.card-title').textContent,
+                                          price: card.querySelector('strong').textContent,
+                                          desc: card.querySelector('.text-muted').textContent,
+                                          category: card.dataset.cat,
+                                          quantity: 1
+                                      };
+                                      
+                                      // Reset and show controls
+                                      currentQuantity = 1;
+                                      quantityDisplay.textContent = '1';
+                                      addToCartBtn.style.display = 'block';
+                                      
+                                      document.getElementById('productTitle').textContent = currentProduct.name;
+                                      document.getElementById('productPrice').textContent = currentProduct.price;
+                                      document.getElementById('productDesc').textContent = currentProduct.desc;
+                                      
+                                      // Set category with fallback
+                                      document.getElementById('productCategory').textContent = currentProduct.category ? 
+                                          currentProduct.category.charAt(0).toUpperCase() + currentProduct.category.slice(1) : 
+                                          '<None>';
+                                      
+                                      // Set brand as <None> (not in database)
+                                      document.getElementById('productBrand').textContent = '<None>';
+                                      
+                                      // Set product code as <None> (not in database)
+                                      document.getElementById('productCode').textContent = '<None>';
+                                      
+                                      // Set weight as <None> (not in database)
+                                      document.getElementById('productWeight').textContent = '<None>';
+                                      
+                                      // Set technical specs as <None> (not in database)
+                                      document.getElementById('productSpecs').innerHTML = '<div><None></div>';
+                                      
+                                      sidebar.classList.add('active');
+                                  });
+                              });
+
+                              // Close sidebar
+                              document.querySelector('.close-sidebar').addEventListener('click', () => {
+                                  sidebar.classList.remove('active');
+                              });
+
+                              // Add to cart
+                              document.querySelector('.add-to-cart').addEventListener('click', () => {
+                                  if (currentProduct) {
+                                      const existingItem = cart.find(item => item.name === currentProduct.name);
+                                      if (existingItem) {
+                                          existingItem.quantity += currentQuantity;
+                                      } else {
+                                          cart.push({...currentProduct, quantity: currentQuantity});
+                                      }
+
+                                      // Show success feedback
+                                      const originalText = addToCartBtn.textContent;
+                                      addToCartBtn.textContent = 'Added to Cart!';
+                                      addToCartBtn.classList.add('btn-success');
+                                      setTimeout(() => {
+                                          addToCartBtn.textContent = originalText;
+                                          addToCartBtn.classList.remove('btn-success');
+                                      }, 2000);
+
+                                      // Update cart, badge and reset quantity
+                                      updateCart();
+                                      updateCartCount();
+                                      currentQuantity = 1;
+                                      quantityDisplay.textContent = '1';
+                                  }
+                              });
+
+                              // View cart from main button
+                              mainCartBtn.addEventListener('click', () => {
+                                  updateCart();
+                                  cartPopup.classList.add('active');
+                                  overlay.classList.add('active');
+                              });
+
+                              // Close cart
+                              document.querySelector('.close-cart').addEventListener('click', () => {
+                                  cartPopup.classList.remove('active');
+                                  overlay.classList.remove('active');
+                              });
+
+                              // Function to handle item removal
+                              function removeFromCart(name) {
                                   cart = cart.filter(item => item.name !== name);
                                   updateCart();
-                                });
-                              });
-                            }
-
-                            // Quantity control handlers
-                            increaseBtn.addEventListener('click', () => {
-                              currentQuantity++;
-                              quantityDisplay.textContent = currentQuantity.toString();
-                            });
-
-                            decreaseBtn.addEventListener('click', () => {
-                              if (currentQuantity > 1) {
-                                currentQuantity--;
-                                quantityDisplay.textContent = currentQuantity.toString();
+                                  updateCartCount();
+                                  
+                                  // If cart is empty, close the popup
+                                  if (cart.length === 0) {
+                                      cartPopup.classList.remove('active');
+                                      overlay.classList.remove('active');
+                                  }
                               }
-                            });
 
-                            function updateCartDisplay() {
-                              const cartItems = document.getElementById('cartItems');
-                              cartItems.innerHTML = '';
-                              
-                              let subtotal = 0;
-                              cart.forEach(item => {
-                                const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
-                                subtotal += price * item.quantity;
-                                
-                                cartItems.innerHTML += `
-                                  <div class="border-bottom pb-3 mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                      <div class="d-flex gap-3">
-                                        <div class="product-placeholder" style="width:60px; height:60px;">
-                                          <i class="bi bi-box-seam"></i>
-                                        </div>
-                                        <div>
-                                          <h6 class="mb-1">${item.name}</h6>
-                                          <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
-                                        </div>
-                                      </div>
-                                      <div class="text-end">
-                                        <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
-                                        <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
-                                          <i class="bi bi-trash"></i>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                `;
-                              });
+                              function updateCart() {
+                                  const cartItems = document.getElementById('cartItems');
+                                  cartItems.innerHTML = '';
 
-                              const shipping = 150;
-                              const tax = subtotal * 0.12;
-                              const total = subtotal + shipping + tax;
+                                  let subtotal = 0;
+                                  cart.forEach(item => {
+                                      const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
+                                      subtotal += price * item.quantity;
 
-                              document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
-                              document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
-                              document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
-                              document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
+                                      cartItems.innerHTML += `
+                                          <div class="border-bottom pb-3 mb-3">
+                                              <div class="d-flex justify-content-between align-items-center">
+                                                  <div class="d-flex gap-3">
+                                                      <div class="product-placeholder" style="width:60px; height:60px;">
+                                                          <i class="bi bi-box-seam"></i>
+                                                      </div>
+                                                      <div>
+                                                          <h6 class="mb-1">${item.name}</h6>
+                                                          <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
+                                                      </div>
+                                                  </div>
+                                                  <div class="text-end">
+                                                      <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
+                                                      <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
+                                                          <i class="bi bi-trash"></i>
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      `;
+                                  });
 
-                              // Add remove functionality
-                              document.querySelectorAll('.remove-item').forEach(btn => {
-                                btn.addEventListener('click', (e) => {
-                                  const name = e.currentTarget.dataset.name;
-                                  cart = cart.filter(item => item.name !== name);
-                                  updateCartDisplay();
-                                });
-                              });
-                            }
+                                  const shipping = 150;
+                                  const tax = subtotal * 0.12;
+                                  const total = subtotal + shipping + tax;
 
-                            // Product Details
-                            document.querySelectorAll('.view-product').forEach(btn => {
-                              btn.addEventListener('click', (e) => {
-                                const card = e.target.closest('.product-card');
-                                currentProduct = {
-                                  name: card.querySelector('.card-title').textContent,
-                                  price: card.querySelector('strong').textContent,
-                                  desc: card.querySelector('.text-muted').textContent,
-                                  category: card.dataset.cat,
-                                  quantity: 1
-                                };
-                                
-                                // Reset and show controls
-                                currentQuantity = 1;
-                                quantityDisplay.textContent = '1';
-                                addToCartBtn.style.display = 'block';
-                                
-                                document.getElementById('productTitle').textContent = currentProduct.name;
-                                document.getElementById('productPrice').textContent = currentProduct.price;
-                                document.getElementById('productDesc').textContent = currentProduct.desc;
-                                document.getElementById('productCategory').textContent = currentProduct.category.charAt(0).toUpperCase() + currentProduct.category.slice(1);
-                                document.getElementById('productBrand').textContent = getBrandFromName(currentProduct.name);
-                                document.getElementById('productCode').textContent = getProductCode(currentProduct.name);
-                                document.getElementById('productWeight').textContent = getProductWeight(currentProduct.name);
-                                document.getElementById('productSpecs').innerHTML = getTechnicalSpecs(currentProduct.name);
-                                
-                                sidebar.classList.add('active');
-                              });
-                            });
+                                  document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
+                                  document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
+                                  document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
+                                  document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
 
-                            function getBrandFromName(name) {
-                              const brandNames = {
-                                'VoltMax': 'VoltMax Tools',
-                                'ProBuild': 'ProBuild Construction',
-                                'BuildTuff': 'BuildTuff Materials',
-                                'Duracore': 'Duracore Safety',
-                                'QuickSeal': 'QuickSeal Pro',
-                                'TorquePlus': 'TorquePlus Tools',
-                                'CemX': 'CemX Construction'
-                              };
-                              
-                              for (const [brand, fullName] of Object.entries(brandNames)) {
-                                if (name.includes(brand)) return fullName;
+                                  // Update cart count badge to keep badge in sync
+                                  updateCartCount();
+
+                                  // Add remove functionality (use removeFromCart to keep behavior consistent)
+                                  document.querySelectorAll('.remove-item').forEach(btn => {
+                                      btn.addEventListener('click', (e) => {
+                                          const name = e.currentTarget.dataset.name;
+                                          removeFromCart(name);
+                                      });
+                                  });
                               }
-                              return 'Generic Brand';
-                            }
-
-                            function getProductCode(name) {
-                              const productCodes = {
-                                'ProBuild Premium Cement': 'PBC-5025',
-                                'VoltMax Cordless Drill': 'VMT-2043',
-                                'Steel Rebar': 'STL-1660',
-                                'BuildTuff Hollow Blocks': 'BTH-4816',
-                                'Duracore Safety Helmet': 'DSH-1095',
-                                'QuickSeal Waterproofing Paint': 'QSW-3072',
-                                'TorquePlus Angle Grinder': 'TPG-7504',
-                                'CemX Ready-Mix Concrete': 'CRC-1003'
-                              };
-                              
-                              for (const [productName, code] of Object.entries(productCodes)) {
-                                if (name.includes(productName)) return `Product Code: #${code}`;
-                              }
-                              return 'Product Code: #GEN-1000';
-                            }
-
-                            function getProductWeight(name) {
-                              const weights = {
-                                'ProBuild Premium Cement': '50 kg',
-                                'VoltMax Cordless Drill': '2.1 kg',
-                                'Steel Rebar': '7.4 kg',
-                                'BuildTuff Hollow Blocks': '12.7 kg',
-                                'Duracore Safety Helmet': '0.4 kg',
-                                'QuickSeal Waterproofing Paint': '4 kg',
-                                'TorquePlus Angle Grinder': '1.8 kg',
-                                'CemX Ready-Mix Concrete': '2400 kg/m³'
-                              };
-                              
-                              for (const [productName, weight] of Object.entries(weights)) {
-                                if (name.includes(productName)) return weight;
-                              }
-                              return '1 kg';
-                            }
-
-                            function getTechnicalSpecs(name) {
-                              const specs = {
-                                'ProBuild Premium Cement': `
-                                  <div>Composition: Portland Type 1</div>
-                                  <div>Compressive Strength: 28.5 MPa (28 days)</div>
-                                  <div>Setting Time: Initial 45 mins</div>
-                                  <div>Fineness: 3,250 cm²/g</div>
-                                `,
-                                'VoltMax Cordless Drill': `
-                                  <div>Battery: 20V Li-ion, 4.0Ah</div>
-                                  <div>Chuck Size: 13mm Keyless</div>
-                                  <div>Speed: 0-450/0-1,800 RPM</div>
-                                  <div>Torque Settings: 21+1</div>
-                                  <div>LED Work Light: Yes</div>
-                                `,
-                                'Steel Rebar': `
-                                  <div>Grade: 60 (420 MPa)</div>
-                                  <div>Diameter: 16mm</div>
-                                  <div>Length: 6 meters</div>
-                                  <div>Yield Strength: 420 MPa min</div>
-                                `,
-                                'BuildTuff Hollow Blocks': `
-                                  <div>Dimensions: 4" x 8" x 16"</div>
-                                  <div>Compression Strength: 350 psi</div>
-                                  <div>Water Absorption: <12%</div>
-                                  <div>Shell Thickness: 25mm</div>
-                                `,
-                                'Duracore Safety Helmet': `
-                                  <div>Material: High-density polyethylene</div>
-                                  <div>Impact Rating: Type I, Class E</div>
-                                  <div>Suspension: 4-point</div>
-                                  <div>Certification: ANSI Z89.1-2014</div>
-                                `,
-                                'QuickSeal Waterproofing Paint': `
-                                  <div>Coverage: 25-30 m² per 4kg</div>
-                                  <div>Drying Time: 2-4 hours</div>
-                                  <div>Recoat Time: 6-8 hours</div>
-                                  <div>VOC Content: <50 g/L</div>
-                                `,
-                                'TorquePlus Angle Grinder': `
-                                  <div>Power: 750W</div>
-                                  <div>Disc Size: 4" (100mm)</div>
-                                  <div>No-Load Speed: 12,000 RPM</div>
-                                  <div>Spindle Thread: M10</div>
-                                `,
-                                'CemX Ready-Mix Concrete': `
-                                  <div>Strength Class: C25/30</div>
-                                  <div>Slump: S3 (100-150mm)</div>
-                                  <div>Maximum Aggregate: 20mm</div>
-                                  <div>Cement Content: 350 kg/m³</div>
-                                `
-                              };
-                              
-                              for (const [productName, specification] of Object.entries(specs)) {
-                                if (name.includes(productName)) return specification;
-                              }
-                              return '<div>Specifications not available</div>';
-                            }
-
-                            // Close sidebar
-                            document.querySelector('.close-sidebar').addEventListener('click', () => {
-                              sidebar.classList.remove('active');
-                            });
-
-                            // Add to cart
-                            document.querySelector('.add-to-cart').addEventListener('click', () => {
-                              if (currentProduct) {
-                                const existingItem = cart.find(item => item.name === currentProduct.name);
-                                if (existingItem) {
-                                  existingItem.quantity += currentQuantity;
-                                } else {
-                                  cart.push({...currentProduct, quantity: currentQuantity});
-                                }
-
-                                // Show success feedback
-                                const originalText = addToCartBtn.textContent;
-                                addToCartBtn.textContent = 'Added to Cart!';
-                                addToCartBtn.classList.add('btn-success');
-                                setTimeout(() => {
-                                  addToCartBtn.textContent = originalText;
-                                  addToCartBtn.classList.remove('btn-success');
-                                }, 2000);
-
-                                // Update cart, badge and reset quantity
-                                updateCart();
-                                updateCartCount();
-                                currentQuantity = 1;
-                                quantityDisplay.textContent = '1';
-                              }
-                            });
-
-                            // View cart from main button
-                            mainCartBtn.addEventListener('click', () => {
-                              updateCart();
-                              cartPopup.classList.add('active');
-                              overlay.classList.add('active');
-                            });
-
-                            // Close cart
-                            document.querySelector('.close-cart').addEventListener('click', () => {
-                              cartPopup.classList.remove('active');
-                              overlay.classList.remove('active');
-                            });
-
-                            // Function to handle item removal
-                            function removeFromCart(name) {
-                              cart = cart.filter(item => item.name !== name);
-                              updateCart();
-                              updateCartCount();
-                              
-                              // If cart is empty, close the popup
-                              if (cart.length === 0) {
-                                cartPopup.classList.remove('active');
-                                overlay.classList.remove('active');
-                              }
-                            }
-
-                            function updateCart() {
-                              const cartItems = document.getElementById('cartItems');
-                              cartItems.innerHTML = '';
-
-                              let subtotal = 0;
-                              cart.forEach(item => {
-                                const price = parseFloat(item.price.replace('₱', '').replace(',', ''));
-                                subtotal += price * item.quantity;
-
-                                cartItems.innerHTML += `
-                                  <div class="border-bottom pb-3 mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                      <div class="d-flex gap-3">
-                                        <div class="product-placeholder" style="width:60px; height:60px;">
-                                          <i class="bi bi-box-seam"></i>
-                                        </div>
-                                        <div>
-                                          <h6 class="mb-1">${item.name}</h6>
-                                          <div class="text-muted small">₱${price.toLocaleString()} x ${item.quantity}</div>
-                                        </div>
-                                      </div>
-                                      <div class="text-end">
-                                        <div class="fw-bold mb-1">₱${(price * item.quantity).toLocaleString()}</div>
-                                        <button class="btn btn-sm btn-outline-danger remove-item" data-name="${item.name}">
-                                          <i class="bi bi-trash"></i>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                `;
-                              });
-
-                              const shipping = 150;
-                              const tax = subtotal * 0.12;
-                              const total = subtotal + shipping + tax;
-
-                              document.getElementById('subtotal').textContent = `₱${subtotal.toLocaleString()}`;
-                              document.getElementById('shipping').textContent = `₱${shipping.toLocaleString()}`;
-                              document.getElementById('tax').textContent = `₱${tax.toLocaleString()}`;
-                              document.getElementById('total').textContent = `₱${total.toLocaleString()}`;
-
-                              // Update cart count badge to keep badge in sync
-                              updateCartCount();
-
-                              // Add remove functionality (use removeFromCart to keep behavior consistent)
-                              document.querySelectorAll('.remove-item').forEach(btn => {
-                                btn.addEventListener('click', (e) => {
-                                  const name = e.currentTarget.dataset.name;
-                                  removeFromCart(name);
-                                });
-                              });
-                            }
                           })();
-                        </script>
+                      </script>
                       </div>
                     </div>
                 </div>
