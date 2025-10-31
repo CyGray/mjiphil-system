@@ -1,43 +1,50 @@
-// /scripts/login-script.js
 document.addEventListener("DOMContentLoaded", function() {
-  const loginForm = document.getElementById("loginForm");
-  const signupLink = document.getElementById("signupLink");
-  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+    const loginForm = document.getElementById("loginForm");
+    const signupLink = document.getElementById("signupLink");
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+    const eyeIcon = document.getElementById("eyeIcon");
 
-  // If user already logged in before
-  const loggedInUser = localStorage.getItem("loggedInUser");
-  if (loggedInUser) {
-    window.location.href = "/mjiphil-system/catalog.php";
-  }
+    passwordInput.addEventListener("input", function() {
+      if (passwordInput.value.length > 0) {
+        togglePassword.classList.remove("d-none");
+      } else {
+        togglePassword.classList.add("d-none");
+      }
+    });
 
-  loginForm.addEventListener("submit", function(e) {
-    e.preventDefault();
+    togglePassword.addEventListener("click", function() {
+      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+      passwordInput.setAttribute("type", type);
+      
+      if (type === "password") {
+        eyeIcon.classList.remove("bi-eye");
+        eyeIcon.classList.add("bi-eye-slash");
+      } else {
+        eyeIcon.classList.remove("bi-eye-slash");
+        eyeIcon.classList.add("bi-eye");
+      }
+    });
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+    loginForm.addEventListener("submit", function(e) {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-    const users = JSON.parse(localStorage.getItem("registeredUsers")) || [];
+      if (!email || !password) {
+        e.preventDefault();
+        alert("Please fill in all fields.");
+        return;
+      }
+    });
 
-    const foundUser = users.find(
-      user => user.email === email && user.password === btoa(password)
-    );
+    signupLink.addEventListener("click", function(e) {
+      e.preventDefault();
+      window.location.href = "./register.php";
+    });
 
-    if (foundUser) {
-      localStorage.setItem("loggedInUser", JSON.stringify(foundUser));
-      alert("Login successful!");
-      window.location.href = "/mjiphil-system/catalog.php";
-    } else {
-      alert("Invalid email or password.");
-    }
+    forgotPasswordLink.addEventListener("click", function(e) {
+      e.preventDefault();
+      alert("Password reset feature coming soon.");
+    });
   });
-
-  signupLink.addEventListener("click", function(e) {
-    e.preventDefault();
-    window.location.href = "/mjiphil-system/register/register.php";
-  });
-
-  forgotPasswordLink.addEventListener("click", function(e) {
-    e.preventDefault();
-    window.location.href = "/mjiphil-system/forgotpassword.php";
-  });
-});

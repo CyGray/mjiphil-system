@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$email]);
             $user = $stmt->fetch();
 
-            if ($user && base64_decode($user['password']) === $password) {
+              if ($user && base64_decode($user['password']) === $password) {
                 // Login successful
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['email'] = $user['email'];
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($user['role'] === 'admin') {
                     header("Location: ./inventory.php");
                 } else {
-                    header("Location: ./catalog.php");
+                    header("Location: ./dashboard.php");
                 }
                 exit;
             } else {
@@ -59,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login | MJIPhil Construction</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="./styles/login.css">
   </head>
 
@@ -100,8 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <input type="email" name="email" id="email" class="form-control custom-input" placeholder="Your email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
             </div>
 
-            <div class="mb-2">
+            <div class="mb-2 position-relative">
               <input type="password" name="password" id="password" class="form-control custom-input" placeholder="Password" required>
+              <button type="button" class="btn btn-link position-absolute password-toggle d-none" id="togglePassword">
+                <i class="bi bi-eye-slash" id="eyeIcon"></i>
+              </button>
             </div>
 
             <div class="text-end mb-3">
@@ -130,34 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const loginForm = document.getElementById("loginForm");
-        const signupLink = document.getElementById("signupLink");
-        const forgotPasswordLink = document.getElementById("forgotPasswordLink");
-
-        // Form is now handled by PHP, but we can keep basic JS validation
-        loginForm.addEventListener("submit", function(e) {
-          const email = document.getElementById("email").value.trim();
-          const password = document.getElementById("password").value.trim();
-
-          if (!email || !password) {
-            e.preventDefault();
-            alert("Please fill in all fields.");
-            return;
-          }
-        });
-
-        signupLink.addEventListener("click", function(e) {
-          e.preventDefault();
-          window.location.href = "./register.php";
-        });
-
-        forgotPasswordLink.addEventListener("click", function(e) {
-          e.preventDefault();
-          alert("Password reset feature coming soon.");
-        });
-      });
-    </script>
+    <script src="./scripts/login.js"></script>
   </body>
 </html>

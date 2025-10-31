@@ -4,7 +4,6 @@ html, body {
   font-family: "Poppins", sans-serif;
 }
 
-/* layout */
 .login-wrapper {
   background-color: #431B1B;
   height: 100vh;
@@ -15,7 +14,6 @@ html, body {
   overflow: hidden;
 }
 
-/* left side */
 .left-area {
   flex-grow: 1;
   display: flex;
@@ -24,7 +22,6 @@ html, body {
   position: relative;
 }
 
-/* logo */
 .company-logo {
   width: 300px;
   height: auto;
@@ -32,7 +29,6 @@ html, body {
   top: -80px;
 }
 
-/* tagline */
 .tagline {
   position: absolute;
   top: 250px;
@@ -45,14 +41,12 @@ html, body {
   line-height: 1.4;
 }
 
-/* white panel */
 .login-panel {
   background-color: #ffffff;
   height: 100vh;
   width: 60%;
 }
 
-/* welcome */
 .welcome-text {
   position: relative;
   top: -30px;
@@ -66,7 +60,6 @@ html, body {
   left: -205px;
 }
 
-/* input fields */
 .custom-input {
   border-radius: 10px;
   border: 2px solid #431B1B;
@@ -80,7 +73,42 @@ html, body {
   border-color: #431B1B;
 }
 
-/* sign in */
+.custom-input[type="password"],
+.custom-input[type="text"] {
+  padding-right: 45px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #6c757d;
+  cursor: pointer;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: #495057;
+}
+
+.password-toggle:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.password-toggle i {
+  font-size: 20px;
+}
+
 .custom-btn {
   border-radius: 10px;
   background-color: #431B1B;
@@ -95,7 +123,6 @@ html, body {
   transform: translateY(-2px);
 }
 
-/* google button */
 .custom-google {
   border-radius: 10px;
   border: 2px solid #431B1B;
