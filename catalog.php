@@ -2,6 +2,12 @@
     require_once 'auth_check.php';
     $title = "MjiPhil Catalog";
     require_once 'config.php';
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Not logged in']);
+        exit;
+    }
+
+$user_id = $_SESSION['user_id'];
 
     // Get products from database with categories and images
     try {
@@ -108,6 +114,7 @@
                                         $catSlug = $categoryMap[$p['category_name']] ?? 'materials';
                                         ?>
                                 <div class="col-6 col-md-4 col-lg-3 mb-4 product-card"
+                                    data-id="<?php echo $p['product_id']; ?>"
                                     data-name="<?php echo strtolower($p['product_name']); ?>"
                                     data-cat="<?php echo $catSlug; ?>" data-price="<?php echo $p['price']; ?>"
                                     data-desc="<?php echo htmlspecialchars($p['description']); ?>">

@@ -1,0 +1,34 @@
+[Error] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\mjiphil-system\api\order.php:21
+
+=== Request @ 2025-11-02 08:43:04 ===
+POST: Array
+(
+    [action] => create
+)
+
+SESSION: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+
+[Error] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\mjiphil-system\api\order.php:21
+
+=== Request @ 2025-11-02 08:45:07 ===
+POST: Array
+(
+    [action] => create
+)
+
+SESSION: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+

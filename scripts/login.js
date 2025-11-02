@@ -27,16 +27,49 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
 
-    loginForm.addEventListener("submit", function(e) {
+    loginForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
 
       if (!email || !password) {
-        e.preventDefault();
         alert("Please fill in all fields.");
         return;
       }
+
+      try {
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("password", password);
+
+        const response = await fetch("./api/login.php", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+        console.log("[Login] Response:", data);
+
+        if (data.success) {
+          console.log(`[Login] User ID: ${data.user_id}, Role: ${data.role}`);
+          alert("Login successful!");
+          if (data.role === "admin") {
+            window.location.href = "./inventory.php";
+          } else {
+            window.location.href = "./catalog.php";
+          }
+        } else {
+          alert(data.message);
+        }
+
+
+      } catch (err) {
+        console.error("Login failed:", err);
+        alert("Login error: " + err.message);
+      }
     });
+
 
     signupLink.addEventListener("click", function(e) {
       e.preventDefault();
