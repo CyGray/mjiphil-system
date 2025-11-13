@@ -15,7 +15,8 @@ class DatabaseSetup {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
         } catch (PDOException $e) {
-            die("Database connection failed: " . $e->getMessage());
+            $this->consoleLog("Database connection failed: " . $e->getMessage(), "error");
+            die();
         }
     }
     
@@ -25,7 +26,7 @@ class DatabaseSetup {
             $this->pdo->exec("CREATE DATABASE IF NOT EXISTS {$this->db_name}");
             $this->pdo->exec("USE {$this->db_name}");
             
-            echo "Database created successfully.<br>";
+            $this->consoleLog("Database created successfully", "success");
             
             // Create tables
             $this->createTables();
@@ -36,10 +37,11 @@ class DatabaseSetup {
             // Sync JSON data
             $this->syncJsonData();
             
-            echo "Database setup completed successfully!";
+            $this->consoleLog("Database setup completed successfully!", "success");
             
         } catch (PDOException $e) {
-            die("Database setup failed: " . $e->getMessage());
+            $this->consoleLog("Database setup failed: " . $e->getMessage(), "error");
+            die();
         }
     }
     
@@ -228,7 +230,7 @@ class DatabaseSetup {
             $this->pdo->exec($tableSql);
         }
         
-        echo "Tables created successfully.<br>";
+        $this->consoleLog("Tables created successfully", "success");
     }
     
     private function insertDefaultData() {
@@ -293,26 +295,96 @@ class DatabaseSetup {
             $stmt->execute($method);
         }
         
-        echo "Default data inserted successfully.<br>";
+        $this->consoleLog("Default data inserted successfully", "success");
     }
     
     private function syncJsonData() {
-        $jsonFile = __DIR__ . '/data/products.json';
-        if (file_exists($jsonFile)) {
-            $jsonData = json_decode(file_get_contents($jsonFile), true);
+    $jsonFile = __DIR__ . '/../data/products.json';
+    $this->consoleLog("Looking for JSON file at: " . $jsonFile, "info");
+    
+    if (file_exists($jsonFile)) {
+        $this->consoleLog("JSON file found", "success");
+        $jsonContent = file_get_contents($jsonFile);
+        $jsonData = json_decode($jsonContent, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->consoleLog("JSON decode error: " . json_last_error_msg(), "error");
+            return;
+        }
+        
+        if (isset($jsonData['products'])) {
+            $this->consoleLog("Found " . count($jsonData['products']) . " products to sync", "info");
             
-            if (isset($jsonData['products'])) {
-                $productStmt = $this->pdo->prepare("INSERT IGNORE INTO product (category_id, product_name, description, price) VALUES (?, ?, ?, ?)");
-                $inventoryStmt = $this->pdo->prepare("INSERT IGNORE INTO inventory (product_id, stock_quantity) VALUES (?, ?)");
-                $imageStmt = $this->pdo->prepare("INSERT IGNORE INTO product_image (product_id, image_url, is_primary) VALUES (?, ?, ?)");
+            // Map JSON category names to database category names
+            $categoryMap = [
+                'materials' => 'Materials',
+                'tools' => 'Tools', 
+                'safety' => 'Safety Gear'
+            ];
+            
+            // Prepare statements
+            $checkProductStmt = $this->pdo->prepare("SELECT product_id FROM product WHERE product_name = ?");
+            $productStmt = $this->pdo->prepare("
+                INSERT INTO product (category_id, product_name, description, price) 
+                VALUES (?, ?, ?, ?)
+            ");
+            $updateProductStmt = $this->pdo->prepare("
+                UPDATE product SET category_id = ?, description = ?, price = ?, updated_at = CURRENT_TIMESTAMP 
+                WHERE product_name = ?
+            ");
+            $inventoryStmt = $this->pdo->prepare("
+                INSERT INTO inventory (product_id, stock_quantity, low_stock_threshold) 
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE stock_quantity = ?, updated_at = CURRENT_TIMESTAMP
+            ");
+            $imageStmt = $this->pdo->prepare("
+                INSERT INTO product_image (product_id, image_url, is_primary, alt_text) 
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE image_url = ?, is_primary = ?, alt_text = ?
+            ");
+            
+            $successCount = 0;
+            $updatedCount = 0;
+            $skippedCount = 0;
+            
+            foreach ($jsonData['products'] as $index => $product) {
+                $this->consoleLog("Processing product {$index}: {$product['product_name']}", "info");
                 
-                foreach ($jsonData['products'] as $product) {
-                    // Get category ID
-                    $categoryStmt = $this->pdo->prepare("SELECT category_id FROM category WHERE category_name = ?");
-                    $categoryStmt->execute([$product['category']]);
-                    $category = $categoryStmt->fetch();
+                // Map the category
+                $jsonCategory = strtolower($product['category']);
+                $dbCategoryName = isset($categoryMap[$jsonCategory]) ? $categoryMap[$jsonCategory] : $jsonCategory;
+                
+                $this->consoleLog("Looking for category: {$dbCategoryName}", "debug");
+                
+                // Get category ID
+                $categoryStmt = $this->pdo->prepare("SELECT category_id FROM category WHERE category_name = ?");
+                $categoryStmt->execute([$dbCategoryName]);
+                $category = $categoryStmt->fetch();
+                
+                if ($category) {
+                    $this->consoleLog("Category found: ID {$category['category_id']}", "success");
                     
-                    if ($category) {
+                    // Check if product already exists with exact name match
+                    $checkProductStmt->execute([$product['product_name']]);
+                    $existingProduct = $checkProductStmt->fetch();
+                    
+                    if ($existingProduct) {
+                        $this->consoleLog("Product already exists with ID: {$existingProduct['product_id']} - updating", "warning");
+                        
+                        // Update existing product
+                        $updateProductStmt->execute([
+                            $category['category_id'],
+                            $product['description'],
+                            $product['price'],
+                            $product['product_name']
+                        ]);
+                        
+                        $product_id = $existingProduct['product_id'];
+                        $updatedCount++;
+                        
+                        $this->consoleLog("Product updated successfully", "success");
+                    } else {
+                        // Insert new product
                         $productStmt->execute([
                             $category['category_id'],
                             $product['product_name'],
@@ -323,24 +395,104 @@ class DatabaseSetup {
                         $product_id = $this->pdo->lastInsertId();
                         
                         if ($product_id) {
-                            $inventoryStmt->execute([$product_id, $product['stock_quantity']]);
-                            
-                            if (!empty($product['image_url'])) {
-                                $imageStmt->execute([$product_id, $product['image_url'], TRUE]);
-                            }
+                            $this->consoleLog("Product inserted with ID: {$product_id}", "success");
+                            $successCount++;
+                        } else {
+                            $this->consoleLog("Failed to get product ID", "error");
+                            $skippedCount++;
+                            continue;
                         }
                     }
+                    
+                    // Update or insert inventory
+                    $inventoryStmt->execute([
+                        $product_id, 
+                        $product['stock_quantity'],
+                        10, // default low stock threshold
+                        $product['stock_quantity'] // value for ON DUPLICATE KEY UPDATE
+                    ]);
+                    
+                    $this->consoleLog("Inventory updated for product ID: {$product_id}", "success");
+                    
+                    // Insert or update image if available
+                    if (!empty($product['image_url'])) {
+                        $imageStmt->execute([
+                            $product_id, 
+                            $product['image_url'], 
+                            TRUE,
+                            $product['product_name'],
+                            $product['image_url'], // values for ON DUPLICATE KEY UPDATE
+                            TRUE,
+                            $product['product_name']
+                        ]);
+                        $this->consoleLog("Image updated for product ID: {$product_id}", "success");
+                    }
+                    
+                } else {
+                    $this->consoleLog("Category '{$dbCategoryName}' not found in database! Product skipped.", "error");
+                    $skippedCount++;
+                    
+                    // Debug: show all available categories
+                    $allCategories = $this->pdo->query("SELECT category_name FROM category")->fetchAll();
+                    $this->consoleLog("Available categories: " . implode(', ', array_column($allCategories, 'category_name')), "debug");
                 }
-                
-                echo "JSON data synchronized successfully.<br>";
             }
+            
+            $this->consoleLog("Sync completed: {$successCount} new products, {$updatedCount} updated, {$skippedCount} skipped", "success");
+        } else {
+            $this->consoleLog("No 'products' key found in JSON data", "error");
         }
+    } else {
+        $this->consoleLog("JSON file not found at: {$jsonFile}", "error");
+    }
+}
+
+    private function consoleLog($message, $type = "info") {
+        $styles = [
+            "success" => "color: green; font-weight: bold;",
+            "error"   => "color: red; font-weight: bold;",
+            "info"    => "color: blue;",
+            "debug"   => "color: orange;",
+            "warning" => "color: purple;"
+        ];
+        
+        $style = $styles[$type] ?? $styles["info"];
+        echo "<script>console.log('%c[ DATABASE ] $message', '$style');</script>";
+        
+        // Flush output to make sure it appears immediately in browser
+        flush();
+        ob_flush();
     }
 }
 
 // Run setup if this file is accessed directly
 if (basename($_SERVER['PHP_SELF']) === 'setup_database.php') {
+    // Set header to HTML to ensure script tags work
+    header('Content-Type: text/html');
+    
+    echo '<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Database Setup</title>
+    </head>
+    <body>
+        <h2>Database Setup Running...</h2>
+        <p>Check the browser console (F12) for detailed logs.</p>
+        <div id="progress"></div>
+        
+        <script>
+            console.log("=== DATABASE SETUP STARTED ===");
+            document.getElementById("progress").innerHTML = "Setup in progress...";
+        </script>';
+    
     $setup = new DatabaseSetup();
     $setup->setupDatabase();
+    
+    echo '<script>
+            document.getElementById("progress").innerHTML = "Database setup completed!";
+            console.log("=== DATABASE SETUP COMPLETED ===");
+          </script>
+    </body>
+    </html>';
 }
 ?>
