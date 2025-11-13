@@ -4063,3 +4063,591 @@ GET: Array
 )
 
 
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:13 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:13 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:13 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:13 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:13 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:16 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:16 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:16 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:16 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:16 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:28 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:28 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:28 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:28 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:46:28 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:20 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:20 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:20 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:20 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:20 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:59 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:59 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:59 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:59 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:49:59 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:54:36 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:54:36 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:54:36 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:54:36 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 06:54:36 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+

@@ -1,7 +1,385 @@
-When I access the site using the direct url to catalog.php or inventory.php then get redirected to login.php, I want it so that when I log in, 
-I get redirected back to the page that I access first. 
+I want you to add these nav links and edits to the menu.php:
+1. catalog (if not in catalog)
+2. inventory (if not inventory + role=admin)
+3. about us (grayed out)
+4. settings (grayed out)
 
-However, if I accessed inventory.php but log in as a user (no admin role), redirect to catalog.php
+5. red - exit icon - Logout - small
+
+If you need access to more file for context, let me know before we move on to actually coding - never assume content of a file.
+
+
+## 📁 Folder Structure
+
+```
+├─ alter_order_item.py
+├─ analysis.md
+├─ auth_check.php
+├─ catalog.php
+├─ config.php
+├─ dashboard.php
+├─ index.html
+├─ inventory.php
+├─ login.php
+├─ menu.php
+├─ prompt.txt
+├─ register.php
+├─ api
+│  ├─ cart.php
+│  ├─ login.php
+│  └─ order.php
+├─ data
+│  ├─ JsonDataManager.php
+│  └─ products.json
+├─ assets
+│  ├─ AngleGrndr.png
+│  ├─ banner.png
+│  ├─ banner2.png
+│  ├─ BTuffHollowBlock.png
+│  ├─ DuraCoreHelm.png
+│  ├─ nobg-logo.png
+│  ├─ ProBuildCement.png
+│  ├─ QuickSeal.png
+│  ├─ ReadyMConcrete.png
+│  ├─ SteelRebar16mm.png
+│  └─ VoltMaxCordDrill.png
+├─ logs
+│  ├─ cart-api.log
+│  ├─ login.log
+│  └─ order-api.log
+├─ scripts
+│  ├─ add_product.php
+│  ├─ catalog.js
+│  ├─ components.js
+│  ├─ delete_item.php
+│  ├─ inventory.js
+│  ├─ login.js
+│  ├─ logout.php
+│  ├─ main.js
+│  ├─ products.js
+│  ├─ register.js
+│  └─ session_check.js
+├─ utils
+│  ├─ setup.php
+│  └─ setup_database.php
+├─ styles
+│  ├─ catalog.css
+│  ├─ components.css
+│  ├─ dashboard.css
+│  ├─ inventory.css
+│  ├─ login.css
+│  └─ register.css
+└─ backups
+   ├─ api
+   │  ├─ cart.php
+   │  └─ login.php
+   └─ logs
+      └─ cart-api.log
+
+// menu.php
+<link rel="stylesheet" href="../style/components.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<?php
+    $current_page = basename($_SERVER['PHP_SELF']);
+?>
+
+<div class="col-sm-2 sidebar d-flex flex-column">
+    <div class="sidebar-header">
+        <img
+            src="./assets/nobg-logo.png"
+            alt="MJIPhil Construction Logo"
+            class="company-logo"
+        />
+        <span class="company-name">MJIPHIL CONSTRUCTION</span>
+    </div>
+
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'dashboard.php') ? 'active' : ''; ?>" href="dashboard.php">
+                <i class="bi bi-speedometer2 me-2"></i>DASHBOARD
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'catalog.php') ? 'active' : ''; ?>" href="catalog.php">
+                <i class="bi bi-grid-3x3-gap-fill me-2"></i>CATALOG
+            </a>
+        </li>
+    </ul>
+    
+    <div class="logout-container">
+        <a class="nav-link logout-btn" href="./scripts/logout.php">
+            <i class="bi bi-box-arrow-right me-2"></i>LOGOUT
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const logoutBtn = document.querySelector('.logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to logout?')) {
+                    window.location.href = this.getAttribute('href');
+                }
+            });
+        }
+    });
+</script>
+
+
+// dashboard.php
+<?php
+require_once 'auth_check.php';
+require_once './config.php';
+
+$user_id = $_SESSION['user_id'];
+$userName = $_SESSION['name'] ?? 'User';
+$firstName = explode(' ', $userName)[0];
+
+/* ===============================
+   FETCH RECENT ORDERS
+================================= */
+$orderQuery = $pdo->prepare("
+    SELECT o.order_id, o.order_date, o.total_amount, s.status_name,
+           (SELECT p.product_name 
+            FROM order_item oi 
+            JOIN product p ON oi.product_id = p.product_id 
+            WHERE oi.order_id = o.order_id LIMIT 1) AS first_item
+    FROM `order` o
+    JOIN order_status s ON o.order_status_id = s.order_status_id
+    WHERE o.user_id = ?
+    ORDER BY o.order_date DESC
+    LIMIT 5
+");
+$orderQuery->execute([$user_id]);
+$orders = $orderQuery->fetchAll(PDO::FETCH_ASSOC);
+
+/* ===============================
+   FETCH USER CART
+================================= */
+$cartQuery = $pdo->prepare("
+    SELECT p.product_name, p.price, ci.quantity
+    FROM cart_item ci
+    JOIN cart c ON ci.cart_id = c.cart_id
+    JOIN product p ON ci.product_id = p.product_id
+    WHERE c.user_id = ?
+");
+$cartQuery->execute([$user_id]);
+$cartItems = $cartQuery->fetchAll(PDO::FETCH_ASSOC);
+
+$cartSubtotal = 0;
+foreach ($cartItems as $item) {
+    $cartSubtotal += $item['price'] * $item['quantity'];
+}
+?>
+
+<?php $title = "MJIPhil Dashboard"; ?>
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?php echo $title; ?></title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Cutive+Mono&family=Monomaniac+One&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="./styles/components.css">
+        <link rel="stylesheet" href="./styles/dashboard.css">
+        <style>
+            a.btn-view {
+            text-decoration: none !important;
+            color: white !important;
+            }
+        </style>
+
+
+    </head>
+    
+    <body>
+        <?php include './menu.php'; ?>
+        
+        <div class="main-content">
+            <div class="container-fluid">
+                <div class="hero-banner">
+                    <img src="./assets/banner.png" alt="MjiPhil Construction Supplies" class="banner-image">
+                    <div class="banner-overlay">
+                        <div class="banner-content">
+                            <h1>MJIPhil Construction Supplies</h1>
+                            <p>Quality Tools and Materials for your construction needs</p>
+                            <a href="catalog.php" class="btn-shop-now">Shop Now</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="row">
+                    <div class="col-lg-8">
+                        <div class="welcome-section">
+                            <h2>Welcome, <?php echo htmlspecialchars($firstName); ?></h2>
+                            <p>What do you want to do today?</p>
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" class="form-control" placeholder="Search Products here...">
+                            </div>
+                        </div>
+
+                        <div class="featured-products">
+                            <h3>Featured Products</h3>
+                            <div class="product-grid">
+
+                                <div class="product-card">
+                                    <img src="./assets/products/portland-cement.jpg" alt="Portland Cement" class="product-image">
+                                    <h4>Portland Premium Cement (50kg)</h4>
+                                    <p>High-quality cement for construction projects</p>
+                                    <div class="product-footer">
+                                        <span class="product-price">₱285.00</span>
+                                        <button class="btn-view">View</button>
+                                    </div>
+                                </div>
+
+                                <div class="product-card">
+                                    <img src="./assets/products/drill.jpg" alt="Cordless Drill" class="product-image">
+                                    <h4>VidMac Cordless Drill 20V</h4>
+                                    <p>Powerful and lightweight drill with a 20V battery</p>
+                                    <div class="product-footer">
+                                        <span class="product-price">₱3,450.00</span>
+                                        <button class="btn-view">View</button>
+                                    </div>
+                                </div>
+
+                                <div class="product-card">
+                                    <img src="./assets/products/steel-bars.jpg" alt="Steel Rebar" class="product-image">
+                                    <h4>Steel Rebar 16mm (Grade 60)</h4>
+                                    <p>High-grade reinforcement bars for concrete structures</p>
+                                    <div class="product-footer">
+                                        <span class="product-price">₱750.00</span>
+                                        <button class="btn-view">View</button>
+                                    </div>
+                                </div>
+
+                                <div class="product-card">
+                                    <img src="./assets/products/hollow-blocks.jpg" alt="Hollow Blocks" class="product-image">
+                                    <h4>BuildFill Hollow Blocks (4x8x16 in)</h4>
+                                    <p>Standard concrete hollow blocks</p>
+                                    <div class="product-footer">
+                                        <span class="product-price">₱18.00</span>
+                                        <button class="btn-view">View</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="sidebar-section">
+                            <h3>Your Recent Orders</h3>
+                            <div class="orders-list">
+                                <?php if (empty($orders)): ?>
+                                    <div class="text-muted small">No recent orders found.</div>
+                                <?php else: ?>
+                                    <?php foreach ($orders as $order): ?>
+                                        <div class="order-item mb-3 p-2 border rounded">
+                                            <div class="order-header d-flex justify-content-between">
+                                                <span class="fw-bold">Order #<?php echo $order['order_id']; ?></span>
+                                                <span class="text-muted small">
+                                                    <?php echo date('M d, Y', strtotime($order['order_date'])); ?>
+                                                </span>
+                                            </div>
+                                            <div class="order-details text-truncate small text-muted">
+                                                <?php echo htmlspecialchars($order['first_item']); ?>
+                                            </div>
+                                            <div class="order-footer d-flex justify-content-between align-items-center mt-2">
+                                                <span class="fw-bold text-danger">₱<?php echo number_format($order['total_amount'], 2); ?></span>
+                                                <span class="badge bg-secondary"><?php echo $order['status_name']; ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Live Cart -->
+                        <div class="sidebar-section mt-4">
+                            <h3>Your Cart</h3>
+                            <?php if (empty($cartItems)): ?>
+                                <div class="cart-empty text-center">
+                                    <img src="./assets/icons/hard-hat.png" alt="Empty Cart" width="80">
+                                    <p class="text-muted mt-2 mb-1">Your cart is currently empty.</p>
+                                    <a href="catalog.php" class="btn-shop-now-small btn btn-sm btn-dark mt-2">Shop Now</a>
+                                </div>
+                            <?php else: ?>
+                                <div class="cart-items">
+                                    <?php foreach ($cartItems as $item): ?>
+                                        <div class="cart-item d-flex justify-content-between align-items-center border-bottom py-2">
+                                            <div>
+                                                <strong class="d-block" style="font-size:0.9rem;">
+                                                    <?php echo htmlspecialchars($item['product_name']); ?>
+                                                </strong>
+                                                <small class="text-muted">
+                                                    ₱<?php echo number_format($item['price'], 2); ?> × <?php echo $item['quantity']; ?>
+                                                </small>
+                                            </div>
+                                            <span class="fw-bold text-danger">
+                                                ₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?>
+                                            </span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                    <div class="cart-total mt-3 d-flex justify-content-between">
+                                        <span class="fw-bold">Subtotal:</span>
+                                        <span class="fw-bold text-dark">₱<?php echo number_format($cartSubtotal, 2); ?></span>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <a href="catalog.php" class="btn btn-sm btn-outline-dark">Continue Shopping</a>
+                                        <a href="catalog.php#checkout" class="btn-view">Checkout</a>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            document.querySelector('.search-box input').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const products = document.querySelectorAll('.product-card');
+                
+                products.forEach(product => {
+                    const title = product.querySelector('h4').textContent.toLowerCase();
+                    const description = product.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                        product.style.display = 'block';
+                    } else {
+                        product.style.display = 'none';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-view').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productTitle = this.closest('.product-card').querySelector('h4').textContent;
+                    window.location.href = 'catalog.php';
+                });
+            });
+
+            document.querySelectorAll('.btn-view-details').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderNumber = this.closest('.order-item').querySelector('.order-number').textContent;
+                    window.location.href = 'order-history.php';
+                });
+            });
+        </script>
+    </body>
+</html>
 
 
 // inventory.php
@@ -410,92 +788,79 @@ try {
 </body>
 </html>
 
-
 // catalog.php
+
 <?php
-// START - Put this at the VERY top, no whitespace before
-session_start();
-ob_start();
+    require_once 'auth_check.php';
+    $title = "MjiPhil Catalog";
+    require_once 'config.php';
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Not logged in']);
+        exit;
+    }
 
-// Debug session
-error_log("Catalog Session: " . print_r($_SESSION, true));
+$user_id = $_SESSION['user_id'];
 
-// Check authentication
-if (empty($_SESSION['user_id']) || empty($_SESSION['email'])) {
-    header("Location: ./login.php");
-    exit;
-}
+    // Get products from database with categories and images
+    try {
+        $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                        c.category_name, c.category_id,
+                        pi.image_url,
+                        i.stock_quantity
+                  FROM product p
+                  INNER JOIN category c ON p.category_id = c.category_id
+                  LEFT JOIN product_image pi ON p.product_id = pi.product_id
+                  LEFT JOIN inventory i ON p.product_id = i.product_id
+                  WHERE i.stock_quantity > 0
+                  ORDER BY p.product_name";
+        
+        $stmt = $pdo->query($query);
+        $products = $stmt->fetchAll();
+        
+        // Group products by category for the catalog display
+        $categorized_products = [];
+        foreach ($products as $product) {
+            $categorized_products[$product['category_name']][] = $product;
+        }
+        
+    } catch (PDOException $e) {
+        error_log("Error loading products: " . $e->getMessage());
+        $categorized_products = [];
+    }
 
-require_once 'config.php';
-$title = "MjiPhil Catalog";
-
-// Release session lock for long operations
-session_write_close();
-
-$start = microtime(true);
-
-// Get products from database
-try {
-    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 3);
-    $query = "SELECT p.product_id, p.product_name, p.description, p.price,
-                     c.category_name, c.category_id,
-                     pi.image_url,
-                     i.stock_quantity
-               FROM product p
-               INNER JOIN category c ON p.category_id = c.category_id
-               LEFT JOIN product_image pi ON p.product_id = pi.product_id
-               LEFT JOIN inventory i ON p.product_id = i.product_id
-               WHERE i.stock_quantity > 0
-               ORDER BY p.product_name";
-    
-    $stmt = $pdo->query($query);
-    $products = $stmt->fetchAll();
-    
-    // Debug: Check if products were found
-    error_log("Products found: " . count($products));
-    
-} catch (Exception $e) {
-    error_log("Error loading products: " . $e->getMessage());
-    $products = [];
-    echo "<!-- DB error: " . $e->getMessage() . " -->";
-}
-
-// Get categories for filter
-try {
-    $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
-    $categories = $stmt->fetchAll();
-} catch (PDOException $e) {
-    error_log("Error loading categories: " . $e->getMessage());
-    $categories = [];
-}
+    // Get categories for filter
+    try {
+        $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
+        $categories = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error loading categories: " . $e->getMessage());
+        $categories = [];
+    }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?php echo htmlspecialchars($title); ?></title>
 
-    <!-- CDN + Fonts -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Cutive+Mono&family=Monomaniac+One&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?php echo $title; ?></title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Cutive+Mono&family=Monomaniac+One&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="./styles/components.css">
+        <link rel="stylesheet" href="./styles/catalog.css">
+    </head>
 
-    <!-- Local Styles -->
-    <link rel="stylesheet" href="./styles/components.css">
-    <link rel="stylesheet" href="./styles/catalog.css">
-</head>
+    <body>
+        <?php include './menu.php'; ?>
 
-<body>
-    <?php include './menu.php'; ?>
-
-    <div class="main-content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
+        <div class="main-content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
                         <div class="col-12">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex align-items-center" style="gap:.5rem;">
@@ -740,204 +1105,38 @@ try {
 
 </html>
 
-// login.php
 <?php
-error_log("SESSION: " . print_r($_SESSION, true));
-if (!empty($_SESSION['user_id']) && !empty($_SESSION['email'])) {
-    if (!empty($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-        header("Location: ./inventory.php");
-    } else {
-        header("Location: ./catalog.php");
-    }
+session_start();
+
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
+    header("Location: ./login.php");
     exit;
 }
 
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $errors = [];
-
-    // Validation
-    if (empty($email)) $errors[] = "Email is required";
-    if (empty($password)) $errors[] = "Password is required";
-
-    if (empty($errors)) {
-        try {
-            $stmt = $pdo->prepare("SELECT user_id, first_name, last_name, email, password, role FROM user WHERE email = ?");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-              if ($user && base64_decode($user['password']) === $password) {
-                // Login successful
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['first_name'] = $user['first_name'];
-                $_SESSION['last_name'] = $user['last_name'];
-                $_SESSION['role'] = $user['role'];
-
-                // Redirect based on role
-                if ($user['role'] === 'admin') {
-                    header("Location: ./inventory.php");
-                } else {
-                    header("Location: ./catalog.php");
-                }
-                exit;
-            } else {
-                $errors[] = "Invalid email or password";
-            }
-        } catch (PDOException $e) {
-            $errors[] = "Database error: " . $e->getMessage();
-        }
-    }
-}
-?>
-
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login | MJIPhil Construction</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="./styles/login.css">
-  </head>
-
-  <body>
-    <div class="login-wrapper d-flex">
-
-      <div class="left-area flex-grow-1">
-        <img
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq0QCnioq1exA5sUOxXPD1XH0jNUdLrxCEug&s"
-          alt="MJIPhil Construction Logo"
-          class="company-logo"
-        />
-        <p class="tagline">Committed to Quality.<br>Driven by Integrity.</p>
-      </div>
-
-      <div class="login-panel d-flex align-items-center justify-content-center">
-        <div class="login-form text-center w-75">
-          <h2 class="fw-bold mb-2 welcome-text">Welcome back!</h2>
-          <p class="text-muted mb-4 sub-text">Please enter your email and password.</p>
-
-          <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              <?php foreach ($errors as $error): ?>
-                <div><?php echo htmlspecialchars($error); ?></div>
-              <?php endforeach; ?>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          <?php endif; ?>
-
-          <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-              <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          <?php endif; ?>
-
-          <form method="POST" id="loginForm">
-            <div class="mb-3">
-              <input type="email" name="email" id="email" class="form-control custom-input" placeholder="Your email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
-            </div>
-
-            <div class="mb-2 position-relative">
-              <input type="password" name="password" id="password" class="form-control custom-input" placeholder="Password" required>
-              <button type="button" class="btn btn-link position-absolute password-toggle d-none" id="togglePassword">
-                <i class="bi bi-eye-slash" id="eyeIcon"></i>
-              </button>
-            </div>
-
-            <div class="text-end mb-3">
-              <a href="#" id="forgotPasswordLink" class="small text-muted">Forgot password?</a>
-            </div>
-
-            <button type="submit" class="btn btn-login w-100 custom-btn">Sign in</button>
-
-            <div class="d-flex align-items-center my-3">
-              <hr class="flex-grow-1">
-              <span class="px-2 text-muted small">or continue with</span>
-              <hr class="flex-grow-1">
-            </div>
-
-            <button type="button" class="btn btn-outline-secondary w-100 custom-google">
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" class="me-2">
-              Continue with Google
-            </button>
-
-            <p class="small text-muted mt-3">
-              Don't have an account? <a href="./register.php" id="signupLink">Sign up</a>
-            </p>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./scripts/login.js"></script>
-  </body>
-</html>
-
-// auth_check.php
-<?php
-// auth_check.php - Remove the redirect logic, keep only admin check
 function checkAdminAccess() {
-    if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         header("Location: ./catalog.php");
         exit;
     }
 }
 ?>
 
-// config.php
+
+// auth_check.php
+
 <?php
-// Start session only if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
-// DB connection settings
-$DB_HOST = '127.0.0.1';
-$DB_NAME = 'mjiphil_catalog';
-$DB_USER = 'root';
-$DB_PASS = '';
-
-// Auto-setup database on first run
-function setupDatabaseIfNeeded($host, $user, $pass, $dbname) {
-    try {
-        $pdo = new PDO("mysql:host={$host};dbname={$dbname}", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        ]);
-        return $pdo;
-    } catch (PDOException $e) {
-        // Database doesn't exist or can't connect, run setup
-        if (strpos($e->getMessage(), 'Unknown database') !== false) {
-            // require_once './utils/setup_database.php';
-            // $setup = new DatabaseSetup();
-            // $setup->setupDatabase();
-            
-            // Try connecting again
-            return new PDO("mysql:host={$host};dbname={$dbname}", $user, $pass, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-        }
-        throw $e;
-    }
-}
-
-// PDO connection - exceptions mode
-try {
-    $pdo = setupDatabaseIfNeeded($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
+    header("Location: ./login.php");
     exit;
 }
 
-// Include JSON data manager
-require_once 'data/JsonDataManager.php';
-$jsonManager = new JsonDataManager();
+function checkAdminAccess() {
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+        header("Location: ./catalog.php");
+        exit;
+    }
+}
 ?>
+
