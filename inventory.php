@@ -68,6 +68,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: inventory.php");
         exit;
     }
+
+    // In the edit section of inventory.php, update this part:
+
+if (isset($_POST['edit_item'])) {
+    $product_id = $_POST['product_id'] ?? '';
+    $category_id = $_POST['category_id'] ?? '';
+    $product_name = trim($_POST['product_name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $price = $_POST['price'] ?? '';
+    $stock_quantity = $_POST['stock_quantity'] ?? '';
+    $image_url = trim($_POST['image_url'] ?? '');
+
+    // Debug logging
+    error_log("EDIT OPERATION STARTED - Product ID: $product_id");
+    echo "<script>console.log('EDIT OPERATION STARTED - Product ID: $product_id');</script>";
+
+    try {
+        // Start transaction
+        $pdo->beginTransaction();
+
+        // Handle file upload
+        $uploaded_image_url = $image_url;
+        
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+            $uploaded_image_url = handleImageUpload($_FILES['product_image'], $product_name);
+            error_log("File uploaded: $uploaded_image_url");
+        }
+
+        // Update product table
+        $stmt = $pdo->prepare("UPDATE product SET category_id = ?, product_name = ?, description = ?, price = ? WHERE product_id = ?");
+        $stmt->execute([$category_id, $product_name, $description, $price, $product_id]);
+        error_log("Database product updated - Rows affected: " . $stmt->rowCount());
+
+        // Update inventory table
+        $stmt = $pdo->prepare("UPDATE inventory SET stock_quantity = ? WHERE product_id = ?");
+        $stmt->execute([$stock_quantity, $product_id]);
+        error_log("Database inventory updated - Rows affected: " . $stmt->rowCount());
+
+        // Update or insert image
+        if (!empty($uploaded_image_url)) {
+            // Check if image already exists
+            $checkStmt = $pdo->prepare("SELECT image_id FROM product_image WHERE product_id = ?");
+            $checkStmt->execute([$product_id]);
+            $existingImage = $checkStmt->fetch();
+            
+            if ($existingImage) {
+                // Update existing image
+                $stmt = $pdo->prepare("UPDATE product_image SET image_url = ? WHERE product_id = ?");
+                $stmt->execute([$uploaded_image_url, $product_id]);
+                error_log("Database image updated");
+            } else {
+                // Insert new image
+                $stmt = $pdo->prepare("INSERT INTO product_image (product_id, image_url) VALUES (?, ?)");
+                $stmt->execute([$product_id, $uploaded_image_url]);
+                error_log("Database image inserted");
+            }
+        }
+
+        // Get category name for JSON
+        $catStmt = $pdo->prepare("SELECT category_name FROM category WHERE category_id = ?");
+        $catStmt->execute([$category_id]);
+        $category = $catStmt->fetch();
+        error_log("Category retrieved: " . ($category['category_name'] ?? 'unknown'));
+
+        // Update JSON - FIXED: Use JsonDataManager to update JSON data
+        $jsonProduct = [
+            'product_id' => (int)$product_id, // Ensure product_id is included
+            'product_name' => $product_name,
+            'description' => $description,
+            'price' => (float)$price,
+            'stock_quantity' => (int)$stock_quantity,
+            'category' => $category['category_name'],
+            'image_url' => $uploaded_image_url ?: '' // Use uploaded image or empty string
+        ];
+                
+        // Update JSON data using JsonDataManager
+        $jsonUpdateResult = $jsonManager->updateProduct($product_id, $jsonProduct);
+        
+        if ($jsonUpdateResult) {
+            error_log("JSON update SUCCESSFUL");
+            echo "<script>console.log('JSON update SUCCESSFUL for product ID: $product_id');</script>";
+        } else {
+            error_log("JSON update FAILED");
+            echo "<script>console.log('JSON update FAILED for product ID: $product_id');</script>";
+        }
+
+        $pdo->commit();
+        $_SESSION['success'] = "Item updated successfully!";
+        error_log("EDIT OPERATION COMPLETED SUCCESSFULLY");
+        
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        $_SESSION['error'] = "Error updating item: " . $e->getMessage();
+        error_log("EDIT OPERATION FAILED - Database error: " . $e->getMessage());
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $_SESSION['error'] = "Error uploading image: " . $e->getMessage();
+        error_log("EDIT OPERATION FAILED - Image error: " . $e->getMessage());
+    }
+    
+    header("Location: inventory.php");
+    exit;
+}
 }
 
 function handleImageUpload($file, $product_name) {
@@ -317,8 +420,12 @@ try {
                                     <td><?php echo htmlspecialchars(substr($item['description'], 0, 30)) . (strlen($item['description']) > 30 ? '...' : ''); ?></td>
                                     <td>
                                         <div class="action-buttons">
-                                            <button class="btn-action" title="Edit Item"><i class="fas fa-pencil-alt"></i></button>
-                                            <button class="btn-action" title="Delete Item"><i class="fas fa-trash-alt"></i></button>
+                                            <button class="btn-action" title="Edit Item" onclick="editItem(<?php echo $item['product_id']; ?>)">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="btn-action" title="Delete Item" onclick="deleteItem(<?php echo $item['product_id']; ?>)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -400,6 +507,83 @@ try {
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                         Add Item
                     </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div class="modal" id="editItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Item</h2>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="editItemForm" enctype="multipart/form-data">
+                    <input type="hidden" name="edit_item" value="1">
+                    <input type="hidden" name="product_id" id="edit_product_id">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="product_name" id="edit_product_name" placeholder="Product name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" id="edit_description" placeholder="Product description" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Price</label>
+                            <input type="number" class="form-control" name="price" id="edit_price" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" name="stock_quantity" id="edit_stock_quantity" placeholder="Quantity" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" name="category_id" id="edit_category_id" required>
+                                <option value="">Select Category</option>
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?php echo $category['category_id']; ?>"><?php echo htmlspecialchars($category['category_name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Product Image</label>
+                        <div class="file-upload-container">
+                            <div class="file-upload-area" id="editFileUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload or drag and drop</p>
+                                <span>PNG, JPG, JPEG, WebP, SVG (Max: 5MB)</span>
+                                <input type="file" id="edit_product_image" name="product_image" accept=".png,.jpg,.jpeg,.webp,.svg" style="display: none;">
+                            </div>
+                            <div id="editFilePreview" class="file-preview" style="display: none;">
+                                <img id="editPreviewImage" src="" alt="Preview">
+                                <button type="button" onclick="removeEditImage()" class="btn-remove-image">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Or enter Image URL (optional)</label>
+                        <input type="text" class="form-control" name="image_url" id="edit_image_url" placeholder="https://example.com/image.jpg">
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Item</button>
+                    </div>
                 </form>
             </div>
         </div>

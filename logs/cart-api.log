@@ -5677,3 +5677,79 @@ GET: Array
 )
 
 
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 09:49:24 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 09:49:24 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 10:13:50 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-13 10:13:50 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+

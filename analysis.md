@@ -1,16 +1,16 @@
 # 📊 Deep Project Analysis Report
 
-Generated: 2025-11-13T05:36:02.192Z
+Generated: 2025-11-13T08:36:00.291Z
 
 ---
 
 ## 🎯 Project Overview
 
-- **Total Files:** 53
-- **Total Lines of Code:** 52,427
-- **Total Size:** 12.20 MB
+- **Total Files:** 56
+- **Total Lines of Code:** 54,195
+- **Total Size:** 12.36 MB
 - **Languages Detected:** python, unknown, php, javascript
-- **Functions:** 57
+- **Functions:** 55
 - **Classes:** 0
 - **Components:** 0
 
@@ -35,9 +35,6 @@ Generated: 2025-11-13T05:36:02.192Z
 │  ├─ cart.php
 │  ├─ login.php
 │  └─ order.php
-├─ data
-│  ├─ JsonDataManager.php
-│  └─ products.json
 ├─ assets
 │  ├─ AngleGrndr.png
 │  ├─ banner.png
@@ -49,16 +46,31 @@ Generated: 2025-11-13T05:36:02.192Z
 │  ├─ QuickSeal.png
 │  ├─ ReadyMConcrete.png
 │  ├─ SteelRebar16mm.png
-│  └─ VoltMaxCordDrill.png
+│  ├─ VoltMaxCordDrill.png
+│  └─ products
+│     └─ img
+│        ├─ Frogbear.png
+│        └─ MJIPhil.svg
+├─ data
+│  ├─ JsonDataManager.php
+│  └─ products.json
 ├─ logs
 │  ├─ cart-api.log
 │  ├─ login.log
 │  └─ order-api.log
+├─ styles
+│  ├─ catalog.css
+│  ├─ components.css
+│  ├─ dashboard.css
+│  ├─ inventory_f.css
+│  ├─ login.css
+│  └─ register.css
 ├─ scripts
 │  ├─ add_product.php
 │  ├─ catalog.js
 │  ├─ components.js
 │  ├─ delete_item.php
+│  ├─ get_item.php
 │  ├─ inventory.js
 │  ├─ login.js
 │  ├─ logout.php
@@ -69,19 +81,12 @@ Generated: 2025-11-13T05:36:02.192Z
 ├─ utils
 │  ├─ setup.php
 │  └─ setup_database.php
-├─ styles
-│  ├─ catalog.css
-│  ├─ components.css
-│  ├─ dashboard.css
-│  ├─ inventory.css
-│  ├─ login.css
-│  └─ register.css
 └─ backups
-   ├─ api
-   │  ├─ cart.php
-   │  └─ login.php
-   └─ logs
-      └─ cart-api.log
+   ├─ logs
+   │  └─ cart-api.log
+   └─ api
+      ├─ cart.php
+      └─ login.php
 
 ```
 
@@ -93,26 +98,27 @@ Generated: 2025-11-13T05:36:02.192Z
 |------|-----|------|-----------|---------|------------|
 | assets/banner2.png | 18413 | 5.24 MB | 0 | 0 | 0 |
 | assets/banner.png | 18072 | 5.23 MB | 0 | 0 | 0 |
-| logs/cart-api.log | 3225 | 51.39 KB | 0 | 0 | 0 |
+| logs/cart-api.log | 4507 | 69.31 KB | 0 | 0 | 0 |
 | backups/logs/cart-api.log | 1678 | 22.12 KB | 0 | 0 | 0 |
 | assets/ProBuildCement.png | 906 | 246.33 KB | 0 | 0 | 0 |
 | assets/BTuffHollowBlock.png | 891 | 218.01 KB | 0 | 0 | 0 |
-| prompt.txt | 793 | 44.20 KB | 0 | 0 | 0 |
 | assets/VoltMaxCordDrill.png | 751 | 208.69 KB | 0 | 0 | 0 |
 | assets/SteelRebar16mm.png | 748 | 213.30 KB | 0 | 0 | 0 |
 | assets/ReadyMConcrete.png | 670 | 159.14 KB | 0 | 0 | 0 |
 | assets/DuraCoreHelm.png | 594 | 179.12 KB | 0 | 0 | 0 |
-| styles/inventory.css | 565 | 11.22 KB | 0 | 0 | 0 |
+| scripts/inventory.js | 523 | 21.63 KB | 0 | 0 | 0 |
+| styles/inventory_f.css | 512 | 10.77 KB | 0 | 0 | 0 |
+| inventory.php | 508 | 28.27 KB | 7 | 0 | 7 |
 | assets/QuickSeal.png | 508 | 144.60 KB | 0 | 0 | 0 |
-| scripts/catalog.js | 472 | 22.32 KB | 30 | 0 | 66 |
-| inventory.php | 349 | 17.80 KB | 4 | 0 | 4 |
-| utils/setup_database.php | 292 | 15.71 KB | 5 | 0 | 5 |
+| scripts/catalog.js | 507 | 24.91 KB | 30 | 0 | 75 |
+| utils/setup_database.php | 409 | 22.39 KB | 6 | 0 | 6 |
+| assets/products/img/Frogbear.png | 389 | 109.25 KB | 0 | 0 | 0 |
+| catalog.php | 307 | 21.90 KB | 0 | 0 | 0 |
 | styles/dashboard.css | 291 | 6.09 KB | 0 | 0 | 0 |
 | styles/catalog.css | 287 | 5.60 KB | 0 | 0 | 0 |
-| catalog.php | 280 | 18.60 KB | 0 | 0 | 0 |
 | assets/AngleGrndr.png | 264 | 71.58 KB | 0 | 0 | 0 |
 | dashboard.php | 224 | 13.10 KB | 0 | 0 | 0 |
-| analysis.md | 165 | 5.83 KB | 0 | 0 | 0 |
+| analysis.md | 186 | 6.57 KB | 0 | 0 | 0 |
 | api/order.php | 151 | 8.73 KB | 0 | 0 | 0 |
 | register.php | 132 | 6.51 KB | 0 | 0 | 0 |
 | styles/components.css | 129 | 3.57 KB | 0 | 0 | 0 |
@@ -120,16 +126,15 @@ Generated: 2025-11-13T05:36:02.192Z
 | backups/api/cart.php | 127 | 5.63 KB | 0 | 0 | 0 |
 | index.html | 117 | 4.95 KB | 0 | 0 | 0 |
 | login.php | 115 | 5.55 KB | 0 | 0 | 0 |
+| data/products.json | 114 | 3.93 KB | 0 | 0 | 0 |
 | styles/login.css | 113 | 2.07 KB | 0 | 0 | 0 |
-| scripts/inventory.js | 97 | 3.63 KB | 6 | 0 | 12 |
-| data/products.json | 92 | 3.26 KB | 0 | 0 | 0 |
+| menu.php | 109 | 4.13 KB | 0 | 0 | 0 |
 | assets/nobg-logo.png | 89 | 16.77 KB | 0 | 0 | 0 |
 | styles/register.css | 82 | 1.64 KB | 0 | 0 | 0 |
+| logs/order-api.log | 78 | 2.04 KB | 0 | 0 | 0 |
 | scripts/login.js | 68 | 2.64 KB | 0 | 0 | 0 |
 | data/JsonDataManager.php | 63 | 2.38 KB | 8 | 0 | 8 |
-| logs/order-api.log | 52 | 1.36 KB | 0 | 0 | 0 |
 | scripts/products.js | 49 | 2.02 KB | 1 | 0 | 3 |
-| menu.php | 46 | 1.84 KB | 0 | 0 | 0 |
 | scripts/main.js | 40 | 1.58 KB | 1 | 0 | 1 |
 | api/login.php | 38 | 1.52 KB | 0 | 0 | 0 |
 | config.php | 37 | 1.54 KB | 1 | 0 | 1 |
@@ -138,11 +143,14 @@ Generated: 2025-11-13T05:36:02.192Z
 | scripts/add_product.php | 32 | 1.25 KB | 0 | 0 | 0 |
 | utils/setup.php | 32 | 1.17 KB | 0 | 0 | 0 |
 | scripts/delete_item.php | 29 | 1.33 KB | 0 | 0 | 0 |
+| scripts/get_item.php | 29 | 1.21 KB | 0 | 0 | 0 |
 | alter_order_item.py | 25 | 1.02 KB | 0 | 0 | 0 |
+| assets/products/img/MJIPhil.svg | 17 | 39.89 KB | 0 | 0 | 0 |
 | scripts/logout.php | 14 | 585.00 B | 0 | 0 | 0 |
 | auth_check.php | 13 | 321.00 B | 1 | 0 | 1 |
 | scripts/session_check.js | 6 | 238.00 B | 0 | 0 | 0 |
 | logs/login.log | 5 | 282.00 B | 0 | 0 | 0 |
+| prompt.txt | 1 | 82.00 B | 0 | 0 | 0 |
 | scripts/components.js | 0 | 0 B | 0 | 0 | 0 |
 
 ---
@@ -175,30 +183,21 @@ Generated: 2025-11-13T05:36:02.192Z
 
 | File | Changes | Contributors | Last Modified |
 |------|---------|--------------|---------------|
-| catalog.php | 7 | 2 | 2025-11-02 |
-| scripts/catalog.js | 5 | 2 | 2025-11-13 |
+| catalog.php | 8 | 2 | 2025-11-13 |
+| scripts/catalog.js | 6 | 2 | 2025-11-13 |
+| logs/cart-api.log | 5 | 1 | 2025-11-13 |
 | register/register.php | 5 | 2 | 2025-10-25 |
+| inventory.php | 4 | 1 | 2025-11-13 |
+| menu.php | 4 | 2 | 2025-11-13 |
 | styles/catalog.css | 4 | 2 | 2025-10-31 |
 | catalog/catalog.php | 4 | 2 | 2025-10-29 |
 | config.php | 4 | 1 | 2025-10-28 |
 | login/login.php | 4 | 2 | 2025-10-25 |
+| utils/setup_database.php | 3 | 1 | 2025-11-13 |
+| logs/order-api.log | 3 | 1 | 2025-11-13 |
+| prompt.txt | 3 | 1 | 2025-11-13 |
+| scripts/inventory.js | 3 | 1 | 2025-11-13 |
 | scripts/login.js | 3 | 2 | 2025-11-02 |
-| inventory.php | 3 | 1 | 2025-10-28 |
-| login/login-script.js | 3 | 2 | 2025-10-25 |
-| register/register-script.js | 3 | 2 | 2025-10-25 |
-| Inventory/inventory.php | 3 | 1 | 2025-10-25 |
-| index.html | 3 | 1 | 2025-10-20 |
-| api/order.php | 2 | 1 | 2025-11-13 |
-| logs/cart-api.log | 2 | 1 | 2025-11-13 |
-
----
-
-## 🌐 API Routes Detected
-
-### scripts/inventory.js
-
-- `GET sort`
-- `GET order`
 
 ---
 
@@ -206,7 +205,7 @@ Generated: 2025-11-13T05:36:02.192Z
 
 | File | Size | Modified |
 |------|------|----------|
-| data/products.json | 3.26 KB | 2025-11-02 |
+| data/products.json | 3.93 KB | 2025-11-13 |
 | config.php | 1.54 KB | 2025-11-12 |
 
 ---

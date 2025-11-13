@@ -354,15 +354,37 @@ function removeImage() {
 
 function editItem(productId) {
     console.log('Edit item clicked:', productId);
-    if (confirm('Edit item ' + productId + '?')) {
-        alert('Edit functionality for item ' + productId + ' will be implemented soon.');
-    }
+    
+    // Fetch item data
+    fetch('scripts/get_item.php?product_id=' + productId)
+        .then(response => {
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Invalid JSON response:', text);
+                    throw new Error('Server returned invalid JSON');
+                }
+            });
+        })
+        .then(data => {
+            if (data.success) {
+                populateEditForm(data.item);
+                openEditModal();
+            } else {
+                alert('Error loading item data: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading item data: ' + error.message);
+        });
 }
 
 function deleteItem(productId) {
     console.log('Delete item clicked:', productId);
     if (confirm('Are you sure you want to delete this item?')) {
-        fetch('delete_item.php', {
+        fetch('scripts/delete_item.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -400,7 +422,249 @@ window.onclick = function(event) {
     }
 }
 
-// Keyboard shortcuts
+function editItem(productId) {
+    console.log('Edit item clicked:', productId);
+    
+    // Fetch item data
+    fetch('scripts/get_item.php?product_id=' + productId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateEditForm(data.item);
+                openEditModal();
+            } else {
+                alert('Error loading item data: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading item data');
+        });
+}
+
+function populateEditForm(item) {
+    document.getElementById('edit_product_id').value = item.product_id;
+    document.getElementById('edit_product_name').value = item.product_name;
+    document.getElementById('edit_description').value = item.description;
+    document.getElementById('edit_price').value = item.price;
+    document.getElementById('edit_stock_quantity').value = item.stock_quantity;
+    document.getElementById('edit_category_id').value = item.category_id;
+    document.getElementById('edit_image_url').value = item.image_url || '';
+
+    // Handle image preview
+    const filePreview = document.getElementById('editFilePreview');
+    const previewImage = document.getElementById('editPreviewImage');
+    const fileUploadArea = document.getElementById('editFileUploadArea');
+    
+    if (item.image_url) {
+        previewImage.src = item.image_url;
+        filePreview.style.display = 'block';
+        fileUploadArea.style.display = 'none';
+    } else {
+        filePreview.style.display = 'none';
+        fileUploadArea.style.display = 'block';
+    }
+}
+
+function openEditModal() {
+    console.log('Opening edit modal');
+    const modal = document.getElementById('editItemModal');
+    if (modal) {
+        modal.classList.add('show');
+        // Initialize file upload for edit modal
+        setTimeout(() => {
+            initializeEditFileUpload();
+        }, 50);
+    }
+}
+
+function closeEditModal() {
+    console.log('Closing edit modal');
+    const modal = document.getElementById('editItemModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function initializeEditFileUpload() {
+    console.log('initializeEditFileUpload called');
+    const fileUploadArea = document.getElementById('editFileUploadArea');
+    const fileInput = document.getElementById('edit_product_image');
+    const filePreview = document.getElementById('editFilePreview');
+    const previewImage = document.getElementById('editPreviewImage');
+    const imageUrlInput = document.getElementById('edit_image_url');
+
+    if (!fileUploadArea || !fileInput) {
+        console.error('Edit file upload elements not found!');
+        return;
+    }
+
+    // Create a new file input
+    const newFileInput = document.createElement('input');
+    newFileInput.type = 'file';
+    newFileInput.id = 'edit_product_image';
+    newFileInput.name = 'product_image';
+    newFileInput.accept = '.png,.jpg,.jpeg,.webp,.svg';
+    newFileInput.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 10;
+    `;
+
+    // Replace the old file input
+    const oldFileInput = document.getElementById('edit_product_image');
+    if (oldFileInput) {
+        oldFileInput.parentNode.removeChild(oldFileInput);
+    }
+
+    fileUploadArea.style.position = 'relative';
+    fileUploadArea.appendChild(newFileInput);
+
+    const updatedFileInput = document.getElementById('edit_product_image');
+
+    // File input change event
+    updatedFileInput.addEventListener('change', (e) => {
+        console.log('Edit file input change event fired');
+        if (e.target.files && e.target.files.length) {
+            handleEditFileSelect(e.target.files[0], updatedFileInput, imageUrlInput);
+        }
+    });
+
+    // Drag and drop functionality
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadArea.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            updatedFileInput.files = e.dataTransfer.files;
+            const event = new Event('change', { bubbles: true });
+            updatedFileInput.dispatchEvent(event);
+        }
+    });
+}
+
+function handleEditFileSelect(file, fileInput, imageUrlInput) {
+    const filePreview = document.getElementById('editFilePreview');
+    const previewImage = document.getElementById('editPreviewImage');
+    const fileUploadArea = document.getElementById('editFileUploadArea');
+
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Invalid file type. Please select a PNG, JPG, JPEG, WebP, or SVG file.');
+        return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size too large. Maximum size is 5MB.');
+        return;
+    }
+
+    // Clear URL input when file is selected
+    if (imageUrlInput) {
+        imageUrlInput.value = '';
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        filePreview.style.display = 'block';
+        fileUploadArea.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeEditImage() {
+    const fileInput = document.getElementById('edit_product_image');
+    const filePreview = document.getElementById('editFilePreview');
+    const fileUploadArea = document.getElementById('editFileUploadArea');
+    const imageUrlInput = document.getElementById('edit_image_url');
+
+    if (fileInput) fileInput.remove();
+    if (filePreview) filePreview.style.display = 'none';
+    if (fileUploadArea) fileUploadArea.style.display = 'block';
+    if (imageUrlInput) imageUrlInput.value = '';
+    
+    setTimeout(() => {
+        initializeEditFileUpload();
+    }, 50);
+}
+
+// Update the existing deleteItem function to use the correct endpoint
+function deleteItem(productId) {
+    console.log('Delete item clicked:', productId);
+    if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+        fetch('scripts/delete_item.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'product_id=' + productId
+        })
+        .then(response => {
+            // First, check if the response is valid JSON
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Invalid JSON response:', text);
+                    throw new Error('Server returned invalid JSON');
+                }
+            });
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Item deleted successfully');
+                location.reload();
+            } else {
+                alert('Error deleting item: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting item: ' + error.message);
+        });
+    }
+}
+
+// Update window.onclick to handle both modals
+window.onclick = function(event) {
+    const addModal = document.getElementById('addItemModal');
+    const editModal = document.getElementById('editItemModal');
+    
+    if (event.target === addModal) {
+        console.log('Clicked outside add modal, closing');
+        closeModal();
+    }
+    if (event.target === editModal) {
+        console.log('Clicked outside edit modal, closing');
+        closeEditModal();
+    }
+}
+
+// Update keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     // Ctrl + N to open add modal
     if (e.ctrlKey && e.key === 'n') {
@@ -409,29 +673,10 @@ document.addEventListener('keydown', function(e) {
         openAddModal();
     }
     
-    // Escape to close modal
+    // Escape to close modals
     if (e.key === 'Escape') {
-        console.log('Escape pressed, closing modal');
+        console.log('Escape pressed, closing modals');
         closeModal();
-    }
-});
-
-// Test function to manually trigger file input
-function testFileInput() {
-    console.log('=== MANUAL FILE INPUT TEST ===');
-    const fileInput = document.getElementById('product_image');
-    if (fileInput) {
-        console.log('File input found, triggering click...');
-        fileInput.click();
-    } else {
-        console.error('File input not found for manual test');
-    }
-}
-
-// Add a global click handler to debug all clicks in the modal
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('addItemModal');
-    if (modal && modal.classList.contains('show')) {
-        console.log('Click in modal - target:', e.target, 'id:', e.target.id);
+        closeEditModal();
     }
 });

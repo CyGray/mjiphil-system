@@ -598,3 +598,14 @@ textarea.form-control {
         font-size: 0.8rem;
     }
 }
+
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.form-buttons .btn {
+    min-width: 120px;
+}
