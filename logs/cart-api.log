@@ -2543,3 +2543,1523 @@ GET: Array
 )
 
 
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:11 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:11 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:11 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:35 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:35 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:35 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:47 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:47 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:26:47 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:17 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:17 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:17 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:22 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:27 ===
+POST: Array
+(
+    [action] => add
+    [product_id] => 4
+    [quantity] => 4
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:27 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:27 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:30 ===
+POST: Array
+(
+    [action] => add
+    [product_id] => 8
+    [quantity] => 3
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:30 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:30 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4},{"id":8,"name":"CemX Ready-Mix Concrete (1m³)","price":"4200.00","quantity":3}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:34 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:57 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:57 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:27:57 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:28:02 ===
+POST: Array
+(
+    [action] => add
+    [product_id] => 4
+    [quantity] => 4
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:28:02 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:28:02 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:28:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:28:22 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:28:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:01 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:01 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:01 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:07 ===
+POST: Array
+(
+    [action] => add
+    [product_id] => 4
+    [quantity] => 4
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:07 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:07 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:17 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:31 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:31 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:31 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:37 ===
+POST: Array
+(
+    [action] => add
+    [product_id] => 4
+    [quantity] => 4
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:37 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:37 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:38:40 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:09 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:09 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:09 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:40 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:40 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:40 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:40 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:40 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:49 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:49 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:49 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:49 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:39:49 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:40:54 ===
+POST: Array
+(
+    [action] => add
+    [product_id] => 4
+    [quantity] => 4
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:40:54 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:40:54 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:44:01 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:44:01 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:44:01 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:44:01 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:44:01 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => [{"id":4,"name":"BuildTuff Hollow Blocks (4x8x16 in)","price":"18.00","quantity":4}]
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:44:04 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:22 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:22 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:22 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:50 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:50 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:51 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:51 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-12 14:47:51 ===
+POST: Array
+(
+    [action] => sync
+    [cart] => []
+)
+
+GET: Array
+(
+)
+
+

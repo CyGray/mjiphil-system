@@ -1,0 +1,943 @@
+When I access the site using the direct url to catalog.php or inventory.php then get redirected to login.php, I want it so that when I log in, 
+I get redirected back to the page that I access first. 
+
+However, if I accessed inventory.php but log in as a user (no admin role), redirect to catalog.php
+
+
+// inventory.php
+<?php
+require_once 'auth_check.php';
+checkAdminAccess();
+require_once 'config.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['add_item'])) {
+        $category_id = $_POST['category_id'] ?? '';
+        $product_name = trim($_POST['product_name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $price = $_POST['price'] ?? '';
+        $stock_quantity = $_POST['stock_quantity'] ?? '';
+        $image_url = trim($_POST['image_url'] ?? '');
+
+        try {
+            // Start transaction
+            $pdo->beginTransaction();
+
+            // Insert into product table
+            $stmt = $pdo->prepare("INSERT INTO product (category_id, product_name, description, price) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$category_id, $product_name, $description, $price]);
+            $product_id = $pdo->lastInsertId();
+
+            // Insert into inventory table
+            $stmt = $pdo->prepare("INSERT INTO inventory (product_id, stock_quantity) VALUES (?, ?)");
+            $stmt->execute([$product_id, $stock_quantity]);
+
+            // Insert image if provided
+            if (!empty($image_url)) {
+                $stmt = $pdo->prepare("INSERT INTO product_image (product_id, image_url) VALUES (?, ?)");
+                $stmt->execute([$product_id, $image_url]);
+            }
+
+            // Get category name for JSON
+            $catStmt = $pdo->prepare("SELECT category_name FROM category WHERE category_id = ?");
+            $catStmt->execute([$category_id]);
+            $category = $catStmt->fetch();
+
+            // Save to JSON
+            $jsonProduct = [
+                'product_name' => $product_name,
+                'description' => $description,
+                'price' => (float)$price,
+                'stock_quantity' => (int)$stock_quantity,
+                'category' => $category['category_name'],
+                'image_url' => $image_url
+            ];
+            
+            $jsonManager->addProduct($jsonProduct);
+
+            $pdo->commit();
+            $_SESSION['success'] = "Item added successfully!";
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            $_SESSION['error'] = "Error adding item: " . $e->getMessage();
+        }
+        
+        header("Location: inventory.php");
+        exit;
+    }
+}
+
+// Get categories for dropdown
+$categories = ["Tools", "Materials"];
+try {
+    $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
+    $categories = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $_SESSION['error'] = "Error loading categories: " . $e->getMessage();
+}
+
+// Get inventory items with search, filter, and sort
+$search = $_GET['search'] ?? '';
+$category_filter = $_GET['category'] ?? '';
+$type_filter = $_GET['type'] ?? '';
+$sort_by = $_GET['sort'] ?? 'product_id';
+$sort_order = $_GET['order'] ?? 'asc';
+
+// Build query
+$query = "SELECT p.product_id, p.product_name, p.description, p.price, 
+                 c.category_name, i.stock_quantity,
+                 pi.image_url,
+                 COALESCE(SUM(oi.quantity), 0) as monthly_sales
+          FROM product p
+          LEFT JOIN category c ON p.category_id = c.category_id
+          LEFT JOIN inventory i ON p.product_id = i.product_id
+          LEFT JOIN product_image pi ON p.product_id = pi.product_id
+          LEFT JOIN order_item oi ON p.product_id = oi.product_id
+          LEFT JOIN `order` o ON oi.order_id = o.order_id AND o.order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+          WHERE 1=1";
+
+$params = [];
+
+// Add search filter
+if (!empty($search)) {
+    $query .= " AND (p.product_name LIKE ? OR p.description LIKE ?)";
+    $search_term = "%$search%";
+    $params[] = $search_term;
+    $params[] = $search_term;
+}
+
+// Add category filter
+if (!empty($category_filter)) {
+    $query .= " AND p.category_id = ?";
+    $params[] = $category_filter;
+}
+
+// Add type filter (if you have a type field)
+if (!empty($type_filter)) {
+    $query .= " AND c.category_name = ?";
+    $params[] = $type_filter;
+}
+
+// Group by and order by
+$query .= " GROUP BY p.product_id ORDER BY $sort_by $sort_order";
+
+try {
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $inventory_items = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $_SESSION['error'] = "Error loading inventory: " . $e->getMessage();
+    $inventory_items = [];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - MJI PHIL Construction</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="./styles/inventory.css" rel="stylesheet">
+</head>
+<body>
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo">MJI</div>
+            <span class="company-name">MJIPHIL CONSTRUCTION</span>
+        </div>
+        <div class="header-right">
+            <i class="fas fa-bars menu-icon"></i>
+            <form method="GET" action="inventory.php" class="search-header">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" placeholder="Search Products here" id="headerSearch" value="<?php echo htmlspecialchars($search); ?>">
+            </form>
+            <div class="filter-icon" onclick="toggleFilterModal()">
+                <i class="fas fa-filter"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="sidebar-item">
+                <i class="fas fa-th-large"></i>
+                <span><a href="catalog.php" style="color: inherit; text-decoration: none;">CATALOG</a></span>
+            </div>
+            <div class="sidebar-item active">
+                <i class="fas fa-box"></i>
+                <span>INVENTORY</span>
+            </div>
+            <div class="sidebar-item">
+                <i class="fas fa-lock"></i>
+                <span>PRIVACY</span>
+            </div>
+            <div class="sidebar-item">
+                <i class="fas fa-cog"></i>
+                <span>SERVICES</span>
+            </div>
+            <div class="sidebar-item">
+                <i class="fas fa-info-circle"></i>
+                <span>ABOUT US</span>
+            </div>
+            <div class="sidebar-item">
+                <i class="fas fa-file-alt"></i>
+                <span>INFORMATION</span>
+            </div>
+            <div class="sidebar-item">
+                <i class="fas fa-share-alt"></i>
+                <span>SOCIAL MEDIA</span>
+            </div>
+            <div class="logout-section">
+                <div class="logout-item" onclick="logout()">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert alert-success">
+                    <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-danger">
+                    <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                </div>
+            <?php endif; ?>
+
+            <h1 class="page-title">INVENTORY</h1>
+
+            <div class="controls-bar">
+                <div class="controls-left">
+                    <form method="GET" action="inventory.php" class="d-flex gap-2">
+                        <select name="category" class="btn btn-outline" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo $category['category_id']; ?>" <?php echo ($category_filter == $category['category_id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($category['category_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <select name="type" class="btn btn-outline" onchange="this.form.submit()">
+                            <option value="">All Types</option>
+                            <option value="Tools" <?php echo ($type_filter == 'Tools') ? 'selected' : ''; ?>>Tools</option>
+                            <option value="Materials" <?php echo ($type_filter == 'Materials') ? 'selected' : ''; ?>>Materials</option>
+                            <option value="Safety Gear" <?php echo ($type_filter == 'Safety Gear') ? 'selected' : ''; ?>>Safety Gear</option>
+                        </select>
+                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                    </form>
+                </div>
+                <div class="controls-right">
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                    <button class="btn btn-outline" onclick="openBulkUpload()">
+                        <i class="fas fa-upload"></i> Bulk Upload
+                    </button>
+                    <div class="view-toggle">
+                        <button class="active">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button>
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('product_id')">ID <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('product_name')">Item Name <i class="fas fa-sort"></i></th>
+                            <th>Image</th>
+                            <th onclick="sortTable('price')">Price <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('stock_quantity')">Quantity <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('monthly_sales')">Monthly Sales <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('category_name')">Category <i class="fas fa-sort"></i></th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <?php if (empty($inventory_items)): ?>
+                            <tr>
+                                <td colspan="9" class="text-center">No items found</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($inventory_items as $item): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($item['product_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                                    <td>
+                                        <div class="item-image">
+                                            <?php if (!empty($item['image_url'])): ?>
+                                                <img src="<?php echo htmlspecialchars($item['image_url']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                            <?php else: ?>
+                                                <i class="fas fa-image"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td>PHP <?php echo number_format($item['price'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars($item['stock_quantity']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['monthly_sales']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['category_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['description']); ?></td>
+                                    <td>
+                                        <div class="action-icons">
+                                            <i class="fas fa-pen" onclick="editItem(<?php echo $item['product_id']; ?>)"></i>
+                                            <i class="fas fa-trash-alt" onclick="deleteItem(<?php echo $item['product_id']; ?>)"></i>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div class="modal" id="addItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add an Item</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="addItemForm">
+                    <input type="hidden" name="add_item" value="1">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="product_name" placeholder="Product name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" placeholder="Product description" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Price</label>
+                            <input type="number" class="form-control" name="price" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" name="stock_quantity" placeholder="Quantity" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" name="category_id" required>
+                                <option value="">Select Category</option>
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?php echo $category['category_id']; ?>"><?php echo htmlspecialchars($category['category_name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Image URL (optional)</label>
+                            <input type="text" class="form-control" name="image_url" placeholder="Image URL">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                        Add Item
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="./scripts/inventory.js"></script>
+    <script>
+        function sortTable(column) {
+            const url = new URL(window.location.href);
+            const currentSort = url.searchParams.get('sort');
+            const currentOrder = url.searchParams.get('order');
+            
+            let newOrder = 'asc';
+            if (currentSort === column && currentOrder === 'asc') {
+                newOrder = 'desc';
+            }
+            
+            url.searchParams.set('sort', column);
+            url.searchParams.set('order', newOrder);
+            window.location.href = url.toString();
+        }
+
+        function openAddModal() {
+            document.getElementById('addItemModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('addItemModal').classList.remove('show');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = 'logout.php';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('addItemModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Auto-submit search when typing stops
+        let searchTimeout;
+        document.getElementById('headerSearch').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.form.submit();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+
+
+// catalog.php
+<?php
+// START - Put this at the VERY top, no whitespace before
+session_start();
+ob_start();
+
+// Debug session
+error_log("Catalog Session: " . print_r($_SESSION, true));
+
+// Check authentication
+if (empty($_SESSION['user_id']) || empty($_SESSION['email'])) {
+    header("Location: ./login.php");
+    exit;
+}
+
+require_once 'config.php';
+$title = "MjiPhil Catalog";
+
+// Release session lock for long operations
+session_write_close();
+
+$start = microtime(true);
+
+// Get products from database
+try {
+    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 3);
+    $query = "SELECT p.product_id, p.product_name, p.description, p.price,
+                     c.category_name, c.category_id,
+                     pi.image_url,
+                     i.stock_quantity
+               FROM product p
+               INNER JOIN category c ON p.category_id = c.category_id
+               LEFT JOIN product_image pi ON p.product_id = pi.product_id
+               LEFT JOIN inventory i ON p.product_id = i.product_id
+               WHERE i.stock_quantity > 0
+               ORDER BY p.product_name";
+    
+    $stmt = $pdo->query($query);
+    $products = $stmt->fetchAll();
+    
+    // Debug: Check if products were found
+    error_log("Products found: " . count($products));
+    
+} catch (Exception $e) {
+    error_log("Error loading products: " . $e->getMessage());
+    $products = [];
+    echo "<!-- DB error: " . $e->getMessage() . " -->";
+}
+
+// Get categories for filter
+try {
+    $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
+    $categories = $stmt->fetchAll();
+} catch (PDOException $e) {
+    error_log("Error loading categories: " . $e->getMessage());
+    $categories = [];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><?php echo htmlspecialchars($title); ?></title>
+
+    <!-- CDN + Fonts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Cutive+Mono&family=Monomaniac+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Local Styles -->
+    <link rel="stylesheet" href="./styles/components.css">
+    <link rel="stylesheet" href="./styles/catalog.css">
+</head>
+
+<body>
+    <?php include './menu.php'; ?>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center" style="gap:.5rem;">
+                                    <input id="catalogSearch" class="form-control form-control-sm" style="min-width:220px;"
+                                        placeholder="Search products here..." />
+                                    <button class="btn btn-sm d-flex align-items-center gap-2 main-cart-btn"
+                                        style="background-color: #6b0f0f; color: white;">
+                                        <i class="bi bi-cart3"></i>
+                                        <span>Cart</span>
+                                        <span class="badge bg-light text-dark cart-count" style="display: none;">0</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button class="chip active" data-cat="all">All items</button>
+                                    <button class="chip" data-cat="tools">Tools and Equipment</button>
+                                    <button class="chip" data-cat="materials">Building Materials</button>
+                                    <button class="chip" data-cat="plumbing">Plumbing Supplies</button>
+                                    <button class="chip" data-cat="safety">Safety Gear</button>
+                                </div>
+                            </div>
+
+                            <div class="row" id="productGrid">
+                                <?php             
+                                try {
+                                    // Map category names to your existing category slugs
+                                    $categoryMap = [
+                                        'Tools' => 'tools',
+                                        'Materials' => 'materials',
+                                        'Safety Gear' => 'safety',
+                                        'Essentials' => 'materials',
+                                        'Electrical' => 'tools',
+                                        'Plumbing' => 'materials',
+                                        'Hardware' => 'tools',
+                                        'Paint & Supplies' => 'materials',
+                                        'Concrete & Masonry' => 'materials',
+                                        'Lumber & Wood' => 'materials'
+                                    ];
+                                    
+                                    foreach ($products as $p) {
+                                        $catSlug = $categoryMap[$p['category_name']] ?? 'materials';
+                                        ?>
+                                <div class="col-6 col-md-4 col-lg-3 mb-4 product-card"
+                                    data-id="<?php echo $p['product_id']; ?>"
+                                    data-name="<?php echo strtolower($p['product_name']); ?>"
+                                    data-cat="<?php echo $catSlug; ?>" data-price="<?php echo $p['price']; ?>"
+                                    data-desc="<?php echo htmlspecialchars($p['description']); ?>">
+                                    <div class="card h-100 shadow-sm">
+                                        <div class="card-body d-flex flex-column">
+                                            <div class="product-placeholder mb-3">
+                                                <i class="bi bi-box-seam" style="font-size:28px;"></i>
+                                            </div>
+                                            <h6 class="card-title mb-1" style="font-size:.98rem;">
+                                                <?php echo htmlspecialchars($p['product_name']); ?>
+                                            </h6>
+                                            <p class="text-muted small mb-3">
+                                                <?php echo htmlspecialchars($p['description']); ?>
+                                            </p>
+                                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                                <strong class="text-dark">₱<?php echo number_format($p['price'], 2); ?></strong>
+                                                <button class="btn btn-sm view-product"
+                                                    style="background-color: #6b0f0f; color: white;">View</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php
+                                    }
+                                    
+                                } catch (PDOException $e) {
+                                    error_log("Error loading products: " . $e->getMessage());
+                                    echo '<div class="col-12 text-center text-muted">Unable to load products at this time.</div>';
+                                }
+                                ?>
+                            </div>
+
+                            <!-- Product Details Sidebar -->
+                            <div class="product-details-sidebar">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="m-0">Product Details</h5>
+                                    <button class="btn btn-sm btn-outline-secondary close-sidebar">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                <div class="product-info">
+                                    <div class="d-flex gap-3 mb-4">
+                                        <div class="product-placeholder" style="height:200px; flex: 0 0 200px;">
+                                            <i class="bi bi-box-seam" style="font-size:48px;"></i>
+                                        </div>
+                                        <div class="d-flex flex-column gap-2" style="flex: 1;">
+                                            <img src="product-thumbnail-1.jpg" class="img-thumbnail"
+                                                style="width:80px; height:80px; object-fit:cover;">
+                                            <img src="product-thumbnail-2.jpg" class="img-thumbnail"
+                                                style="width:80px; height:80px; object-fit:cover;">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h4 id="productTitle" class="mb-1"></h4>
+                                        <div class="text-muted small mb-2" id="productCode"></div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h5 class="mb-2">Price</h5>
+                                        <h3 id="productPrice" class="text-dark mb-0"></h3>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <label class="form-label small text-muted">Availability</label>
+                                                <div class="text-success">In stock</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small text-muted">Weight</label>
+                                                <div id="productWeight"></div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small text-muted">Brand</label>
+                                                <div id="productBrand"></div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small text-muted">Category</label>
+                                                <div id="productCategory"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6 class="mb-2">Product Description</h6>
+                                        <p id="productDesc" class="text-muted small"></p>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <h6 class="mb-2">Technical Specifications</h6>
+                                        <div class="text-muted small" id="productSpecs"></div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button class="btn btn-outline-secondary rounded-circle decrease-quantity"
+                                                style="width:32px; height:32px; padding:0;">-</button>
+                                            <span class="quantity-display">1</span>
+                                            <button class="btn btn-outline-secondary rounded-circle increase-quantity"
+                                                style="width:32px; height:32px; padding:0;">+</button>
+                                        </div>
+                                        <button class="btn add-to-cart" style="background-color: #6b0f0f; color: white;">
+                                            Add to Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shopping Cart Popup -->
+                            <div class="overlay"></div>
+                            <div class="shopping-cart-popup">
+                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                    <h5 class="m-0">Shopping Cart</h5>
+                                    <button class="btn btn-sm btn-outline-secondary close-cart">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Cart Items with Quantity Controls -->
+                                <div id="cartItems" class="mb-4" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Cart items will be inserted here dynamically -->
+                                </div>
+                                
+                                <!-- Cart Summary -->
+                                <div class="border-top pt-3">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span class="fw-bold">Subtotal</span>
+                                        <span class="fw-bold" id="cartSubtotal">₱0.00</span>
+                                    </div>
+                                    <button class="btn w-100 proceed-checkout-btn" 
+                                            style="background-color: #6b0f0f; color: white;"
+                                            disabled>
+                                        Proceed to Checkout
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Checkout/Order Summary Popup -->
+                            <div class="checkout-popup">
+                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                    <h5 class="m-0">Order Summary</h5>
+                                    <button class="btn btn-sm btn-outline-secondary close-checkout">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Order Items List -->
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Order Items</h6>
+                                    <div id="orderItemsList" style="max-height: 250px; overflow-y: auto;">
+                                        <!-- Items will be inserted here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Order Summary Details -->
+                                <div class="border-top pt-3 mb-4">
+                                    <h6 class="mb-3">Payment Summary</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal</span>
+                                        <span id="checkoutSubtotal">₱0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Shipping Fee</span>
+                                        <span id="checkoutShipping">₱0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                                        <span class="text-muted">Tax (12%)</span>
+                                        <span id="checkoutTax">₱0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-4">
+                                        <span class="fw-bold fs-5">Total</span>
+                                        <span class="fw-bold fs-5 text-danger" id="checkoutTotal">₱0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary back-to-cart-btn" style="flex: 1;">
+                                        <i class="bi bi-arrow-left me-2"></i>Back to Cart
+                                    </button>
+                                    <button class="btn confirm-order-btn" 
+                                            style="background-color: #6b0f0f; color: white; flex: 2;">
+                                        <i class="bi bi-check-circle me-2"></i>Confirm Order
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src='./scripts/catalog.js'></script>
+    </body>
+
+</html>
+
+// login.php
+<?php
+error_log("SESSION: " . print_r($_SESSION, true));
+if (!empty($_SESSION['user_id']) && !empty($_SESSION['email'])) {
+    if (!empty($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+        header("Location: ./inventory.php");
+    } else {
+        header("Location: ./catalog.php");
+    }
+    exit;
+}
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $errors = [];
+
+    // Validation
+    if (empty($email)) $errors[] = "Email is required";
+    if (empty($password)) $errors[] = "Password is required";
+
+    if (empty($errors)) {
+        try {
+            $stmt = $pdo->prepare("SELECT user_id, first_name, last_name, email, password, role FROM user WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+
+              if ($user && base64_decode($user['password']) === $password) {
+                // Login successful
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['first_name'] = $user['first_name'];
+                $_SESSION['last_name'] = $user['last_name'];
+                $_SESSION['role'] = $user['role'];
+
+                // Redirect based on role
+                if ($user['role'] === 'admin') {
+                    header("Location: ./inventory.php");
+                } else {
+                    header("Location: ./catalog.php");
+                }
+                exit;
+            } else {
+                $errors[] = "Invalid email or password";
+            }
+        } catch (PDOException $e) {
+            $errors[] = "Database error: " . $e->getMessage();
+        }
+    }
+}
+?>
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | MJIPhil Construction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="./styles/login.css">
+  </head>
+
+  <body>
+    <div class="login-wrapper d-flex">
+
+      <div class="left-area flex-grow-1">
+        <img
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq0QCnioq1exA5sUOxXPD1XH0jNUdLrxCEug&s"
+          alt="MJIPhil Construction Logo"
+          class="company-logo"
+        />
+        <p class="tagline">Committed to Quality.<br>Driven by Integrity.</p>
+      </div>
+
+      <div class="login-panel d-flex align-items-center justify-content-center">
+        <div class="login-form text-center w-75">
+          <h2 class="fw-bold mb-2 welcome-text">Welcome back!</h2>
+          <p class="text-muted mb-4 sub-text">Please enter your email and password.</p>
+
+          <?php if (!empty($errors)): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <?php foreach ($errors as $error): ?>
+                <div><?php echo htmlspecialchars($error); ?></div>
+              <?php endforeach; ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <?php endif; ?>
+
+          <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <?php endif; ?>
+
+          <form method="POST" id="loginForm">
+            <div class="mb-3">
+              <input type="email" name="email" id="email" class="form-control custom-input" placeholder="Your email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
+            </div>
+
+            <div class="mb-2 position-relative">
+              <input type="password" name="password" id="password" class="form-control custom-input" placeholder="Password" required>
+              <button type="button" class="btn btn-link position-absolute password-toggle d-none" id="togglePassword">
+                <i class="bi bi-eye-slash" id="eyeIcon"></i>
+              </button>
+            </div>
+
+            <div class="text-end mb-3">
+              <a href="#" id="forgotPasswordLink" class="small text-muted">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn btn-login w-100 custom-btn">Sign in</button>
+
+            <div class="d-flex align-items-center my-3">
+              <hr class="flex-grow-1">
+              <span class="px-2 text-muted small">or continue with</span>
+              <hr class="flex-grow-1">
+            </div>
+
+            <button type="button" class="btn btn-outline-secondary w-100 custom-google">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" class="me-2">
+              Continue with Google
+            </button>
+
+            <p class="small text-muted mt-3">
+              Don't have an account? <a href="./register.php" id="signupLink">Sign up</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./scripts/login.js"></script>
+  </body>
+</html>
+
+// auth_check.php
+<?php
+// auth_check.php - Remove the redirect logic, keep only admin check
+function checkAdminAccess() {
+    if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+        header("Location: ./catalog.php");
+        exit;
+    }
+}
+?>
+
+// config.php
+<?php
+// Start session only if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// DB connection settings
+$DB_HOST = '127.0.0.1';
+$DB_NAME = 'mjiphil_catalog';
+$DB_USER = 'root';
+$DB_PASS = '';
+
+// Auto-setup database on first run
+function setupDatabaseIfNeeded($host, $user, $pass, $dbname) {
+    try {
+        $pdo = new PDO("mysql:host={$host};dbname={$dbname}", $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        ]);
+        return $pdo;
+    } catch (PDOException $e) {
+        // Database doesn't exist or can't connect, run setup
+        if (strpos($e->getMessage(), 'Unknown database') !== false) {
+            // require_once './utils/setup_database.php';
+            // $setup = new DatabaseSetup();
+            // $setup->setupDatabase();
+            
+            // Try connecting again
+            return new PDO("mysql:host={$host};dbname={$dbname}", $user, $pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+        }
+        throw $e;
+    }
+}
+
+// PDO connection - exceptions mode
+try {
+    $pdo = setupDatabaseIfNeeded($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
+    exit;
+}
+
+// Include JSON data manager
+require_once 'data/JsonDataManager.php';
+$jsonManager = new JsonDataManager();
+?>

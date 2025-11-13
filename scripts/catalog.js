@@ -312,27 +312,52 @@ const CatalogManager = (() => {
     }
 
     async function confirmOrder() {
-        try {
-            const response = await fetch('./api/order.php', {
-                method: 'POST',
-                credentials: 'include',
-                body: new URLSearchParams({ action: 'create' })
-            });
+    try {
+        console.log("[Order] Starting order creation...");
+        
+        const response = await fetch('./api/order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=create'
+        });
 
-            const data = await response.json();
-            console.log("[Order] Response:", data);
-
-            if (data.success) {
-                showOrderSuccessModal();
-                await loadCartFromDatabase();
-            } else {
-                alert(data.message || "Failed to create order.");
-            }
-        } catch (err) {
-            console.error("Order creation failed:", err);
-            alert("Order creation failed. Check console for details.");
+        // First check if response is OK
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        // Get the response text first to debug
+        const responseText = await response.text();
+        console.log("[Order] Raw response:", responseText);
+
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error("[Order] JSON parse error:", parseError);
+            throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+        }
+
+        console.log("[Order] Parsed response:", data);
+
+        if (data.success) {
+            showOrderSuccessModal();
+            // Clear local cart state
+            cart = [];
+            updateCartDisplay();
+            updateCartCount();
+            closeCheckout();
+        } else {
+            alert(data.message || "Failed to create order.");
+        }
+    } catch (err) {
+        console.error("Order creation failed:", err);
+        alert("Order creation failed: " + err.message);
     }
+}
 
 
     function showOrderSuccessModal() {

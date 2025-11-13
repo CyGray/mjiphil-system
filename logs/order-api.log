@@ -32,3 +32,33 @@ SESSION: Array
 )
 
 
+
+=== ORDER API Request @ 2025-11-12 14:44:04 ===
+POST: Array
+(
+    [action] => create
+)
+
+SESSION user_id: 2
+Processing action: create for user_id: 2
+Found cart_id: 1 for user 2
+Cart items found: 1
+Items: Array
+(
+    [0] => Array
+        (
+            [product_id] => 4
+            [quantity] => 4
+            [price] => 18.00
+            [product_name] => BuildTuff Hollow Blocks (4x8x16 in)
+            [stock_quantity] => 1000
+        )
+
+)
+
+Totals - Subtotal: 72, Tax: 8.64, Shipping: 150, Total: 230.64
+Order created with ID: 1
+Adding order item: Product 4, Qty 4, Price 18.00
+Updating inventory for product 4: reducing by 4
+Cleared cart: 1 items removed
+✅ ORDER SUCCESSFULLY CREATED - Order ID: 1
