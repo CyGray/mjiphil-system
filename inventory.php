@@ -494,11 +494,7 @@ try {
                             </div>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Or enter Image URL (optional)</label>
-                        <input type="text" class="form-control" name="image_url" placeholder="https://example.com/image.jpg">
-                    </div>
+                    
 
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                         Add Item

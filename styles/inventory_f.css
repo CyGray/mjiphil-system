@@ -384,3 +384,432 @@ body {
 .form-buttons .btn {
     min-width: 120px;
 }
+
+/* Modal Styles - MATCHING YOUR DESIGN SYSTEM */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+.modal.show {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    border: 1px solid #e0e0e0;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.modal-header {
+    padding: 1.8rem 2rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border-radius: 12px 12px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #999;
+    padding: 0.25rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    color: #a03c45;
+    background-color: #fff5f5;
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+/* Form Styles Matching Your Design */
+.form-group {
+    margin-bottom: 1.8rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background: white;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #a03c45;
+    box-shadow: 0 0 0 3px rgba(160, 60, 69, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+/* File Upload Styles Matching Your Design */
+.file-upload-container {
+    margin-bottom: 1.5rem;
+}
+
+.file-upload-area {
+    border: 2px dashed #e0e0e0;
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #fafafa;
+    position: relative;
+}
+
+.file-upload-area:hover {
+    border-color: #a03c45;
+    background-color: #fefafa;
+    transform: translateY(-1px);
+}
+
+.file-upload-area.dragover {
+    border-color: #a03c45;
+    background-color: #fef5f5;
+    transform: scale(1.02);
+}
+
+.file-upload-area i {
+    font-size: 2.5rem;
+    color: #ccc;
+    margin-bottom: 0.8rem;
+    transition: color 0.3s ease;
+}
+
+.file-upload-area:hover i {
+    color: #a03c45;
+}
+
+.file-upload-area p {
+    margin: 0.5rem 0;
+    font-weight: 500;
+    color: #333;
+    font-size: 1rem;
+}
+
+.file-upload-area span {
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.file-preview {
+    position: relative;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    background-color: #fafafa;
+    margin-bottom: 1rem;
+}
+
+.file-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-remove-image {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-remove-image:hover {
+    background: #c82333;
+    transform: scale(1.1) rotate(90deg);
+}
+
+/* Button Styles Matching Your Design */
+.btn {
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background-color: #a03c45;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #8b3a3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(160, 60, 69, 0.3);
+}
+
+.btn-secondary {
+    background-color: #f8f8f8;
+    color: #333;
+    border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    transform: translateY(-1px);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.form-buttons .btn {
+    min-width: 120px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+        max-height: 90vh;
+    }
+    
+    .modal-header {
+        padding: 1.5rem 1.5rem 1.2rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .file-upload-area {
+        padding: 2rem 1.5rem;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+    }
+    
+    .form-buttons .btn {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-content {
+        width: 98%;
+        margin: 0.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.25rem;
+    }
+    
+    .file-upload-area {
+        padding: 1.5rem 1rem;
+    }
+    
+    .file-upload-area p {
+        font-size: 0.9rem;
+    }
+    
+    .file-upload-area span {
+        font-size: 0.8rem;
+    }
+}
+
+/* Button Styles Matching Your Maroon Brand Color */
+.btn {
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background-color: #a03c45;
+    color: white;
+    border: 1px solid #a03c45;
+}
+
+.btn-primary:hover {
+    background-color: #8b3a3a;
+    border-color: #8b3a3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(160, 60, 69, 0.3);
+}
+
+.btn-primary:active {
+    background-color: #7a3232;
+    border-color: #7a3232;
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #333;
+    border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background-color: #f8f8f8;
+    border-color: #ccc;
+    transform: translateY(-1px);
+}
+
+/* Form Submit Button - Full Width Maroon Button */
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.form-buttons .btn {
+    min-width: 120px;
+}
+
+/* Specific style for the main submit button in Add Item form */
+#addItemForm .btn-primary,
+#editItemForm .btn-primary {
+    background-color: #a03c45;
+    color: white;
+    border: 1px solid #a03c45;
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+#addItemForm .btn-primary:hover,
+#editItemForm .btn-primary:hover {
+    background-color: #8b3a3a;
+    border-color: #8b3a3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(160, 60, 69, 0.4);
+}
+
+#addItemForm .btn-primary:active,
+#editItemForm .btn-primary:active {
+    background-color: #7a3232;
+    border-color: #7a3232;
+    transform: translateY(0);
+}

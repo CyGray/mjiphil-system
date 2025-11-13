@@ -44,6 +44,7 @@ function sortTable(column) {
 }
 
 // Modal functions
+// Update the openAddModal function to ensure proper initialization
 function openAddModal() {
     console.log('Opening add modal');
     const modal = document.getElementById('addItemModal');
@@ -51,11 +52,12 @@ function openAddModal() {
         modal.classList.add('show');
         console.log('Modal show class added');
         
-        // Re-initialize file upload to ensure event listeners are fresh
-        setTimeout(() => {
-            console.log('Re-initializing file upload for visible modal');
-            initializeFileUpload();
-        }, 50);
+        // Force a reflow to ensure the modal is visible before initializing file upload
+        void modal.offsetWidth;
+        
+        // Re-initialize file upload with the modal now visible
+        console.log('Re-initializing file upload for visible modal');
+        initializeFileUpload();
     } else {
         console.error('Add item modal not found!');
     }
