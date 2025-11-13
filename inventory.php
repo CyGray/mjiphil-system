@@ -38,22 +38,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$product_id, $uploaded_image_url]);
             }
 
-            // Get category name for JSON
+            // Get category name for JSON (Placeholder for JSON logic)
             $catStmt = $pdo->prepare("SELECT category_name FROM category WHERE category_id = ?");
             $catStmt->execute([$category_id]);
             $category = $catStmt->fetch();
 
-            // Save to JSON
-            $jsonProduct = [
-                'product_name' => $product_name,
-                'description' => $description,
-                'price' => (float)$price,
-                'stock_quantity' => (int)$stock_quantity,
-                'category' => $category['category_name'],
-                'image_url' => $uploaded_image_url
-            ];
-            
-            $jsonManager->addProduct($jsonProduct);
+            // Save to JSON (Assuming $jsonManager is defined elsewhere and handles JSON operations)
+            // $jsonProduct = [
+            //     'product_name' => $product_name,
+            //     'description' => $description,
+            //     'price' => (float)$price,
+            //     'stock_quantity' => (int)$stock_quantity,
+            //     'category' => $category['category_name'],
+            //     'image_url' => $uploaded_image_url
+            // ];
+            // $jsonManager->addProduct($jsonProduct); 
 
             $pdo->commit();
             $_SESSION['success'] = "Item added successfully!";
@@ -217,7 +216,7 @@ function handleImageUpload($file, $product_name) {
 }
 
 // Get categories for dropdown
-$categories = ["Tools", "Materials"];
+$categories = [];
 try {
     $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
     $categories = $stmt->fetchAll();
@@ -234,16 +233,16 @@ $sort_order = $_GET['order'] ?? 'asc';
 
 // Build query
 $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
-                 c.category_name, i.stock_quantity,
-                 pi.image_url,
-                 COALESCE(SUM(oi.quantity), 0) as monthly_sales
-          FROM product p
-          LEFT JOIN category c ON p.category_id = c.category_id
-          LEFT JOIN inventory i ON p.product_id = i.product_id
-          LEFT JOIN product_image pi ON p.product_id = pi.product_id
-          LEFT JOIN order_item oi ON p.product_id = oi.product_id
-          LEFT JOIN `order` o ON oi.order_id = o.order_id AND o.order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-          WHERE 1=1";
+                     c.category_name, i.stock_quantity,
+                     pi.image_url,
+                     COALESCE(SUM(oi.quantity), 0) as monthly_sales
+           FROM product p
+           LEFT JOIN category c ON p.category_id = c.category_id
+           LEFT JOIN inventory i ON p.product_id = i.product_id
+           LEFT JOIN product_image pi ON p.product_id = pi.product_id
+           LEFT JOIN order_item oi ON p.product_id = oi.product_id
+           LEFT JOIN `order` o ON oi.order_id = o.order_id AND o.order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+           WHERE 1=1";
 
 $params = [];
 
@@ -261,7 +260,7 @@ if (!empty($category_filter)) {
     $params[] = $category_filter;
 }
 
-// Add type filter (if you have a type field)
+// Add type filter
 if (!empty($type_filter)) {
     $query .= " AND c.category_name = ?";
     $params[] = $type_filter;
@@ -287,15 +286,12 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory - MJI PHIL Construction</title>
     
-    <!-- Bootstrap & Core Styles -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="./styles/components.css">
     
-    <!-- Icons & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- Page Specific Styles -->
     <link href="./styles/inventory_f.css" rel="stylesheet">
 </head>
 <body>
@@ -369,7 +365,7 @@ try {
                         </button>
                         <button class="view-btn">
                             <i class="fas fa-th-large"></i>
-                     </button>
+                       </button>
                     </div>
                 </div>
 
@@ -379,6 +375,7 @@ try {
                 </div>
 
             </div> 
+            
             <div class="table-container">
                 <table class="data-table">
                     <thead>
@@ -412,7 +409,7 @@ try {
                                                 <i class="fas fa-image"></i>
                                             <?php endif; ?>
                                         </div>
-                                   </td>
+                                    </td>
                                     <td>PHP <?php echo number_format($item['price'], 2); ?></td>
                                     <td><?php echo htmlspecialchars($item['stock_quantity']); ?></td>
                                     <td><?php echo htmlspecialchars($item['monthly_sales']); ?></td>
@@ -437,7 +434,6 @@ try {
         </main>
     </div>
 
-    <!-- Add Item Modal -->
     <div class="modal" id="addItemModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -599,7 +595,7 @@ try {
             let newOrder = 'asc';
             if (currentSort === column && currentOrder === 'asc') {
                 newOrder = 'desc';
-           }
+            }
             
             url.searchParams.set('sort', column);
             url.searchParams.set('order', newOrder);
@@ -610,7 +606,7 @@ try {
             const url = new URL(window.location.href);
             url.searchParams.set(filterType, select.value);
             window.location.href = url.toString();
-       }
+        }
 
         function openAddModal() {
             document.getElementById('addItemModal').classList.add('show');
@@ -618,7 +614,7 @@ try {
 
         function closeModal() {
             document.getElementById('addItemModal').classList.remove('show');
-       }
+        }
 
         function openBulkUpload() {
             alert('Bulk upload functionality');
@@ -626,7 +622,7 @@ try {
 
         function toggleFilterModal() {
             alert('Filter modal functionality');
-       }
+        }
 
         // Close modal when clicking outside
         window.onclick = function(event) {
@@ -637,7 +633,7 @@ try {
         }
 
         // Auto-submit search when typing stops
-       let searchTimeout;
+        let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
