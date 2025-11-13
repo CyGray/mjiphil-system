@@ -112,16 +112,32 @@ $user_id = $_SESSION['user_id'];
                                     
                                     foreach ($products as $p) {
                                         $catSlug = $categoryMap[$p['category_name']] ?? 'materials';
+                                        $imageUrl = !empty($p['image_url']) ? $p['image_url'] : '';
                                         ?>
                                 <div class="col-6 col-md-4 col-lg-3 mb-4 product-card"
                                     data-id="<?php echo $p['product_id']; ?>"
                                     data-name="<?php echo strtolower($p['product_name']); ?>"
                                     data-cat="<?php echo $catSlug; ?>" data-price="<?php echo $p['price']; ?>"
-                                    data-desc="<?php echo htmlspecialchars($p['description']); ?>">
+                                    data-desc="<?php echo htmlspecialchars($p['description']); ?>"
+                                    data-image="<?php echo htmlspecialchars($imageUrl); ?>">
                                     <div class="card h-100 shadow-sm">
                                         <div class="card-body d-flex flex-column">
-                                            <div class="product-placeholder mb-3">
-                                                <i class="bi bi-box-seam" style="font-size:28px;"></i>
+                                            <div class="product-image-container mb-3" style="height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 8px; background: #f8f9fa;">
+                                                <?php if (!empty($imageUrl)): ?>
+                                                    <img src="<?php echo htmlspecialchars($imageUrl); ?>" 
+                                                         alt="<?php echo htmlspecialchars($p['product_name']); ?>"
+                                                         style="max-height: 100%; max-width: 100%; object-fit: contain;"
+                                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                    <div class="product-placeholder" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%;">
+                                                        <i class="bi bi-box-seam" style="font-size:28px; color: #6c757d;"></i>
+                                                        <small class="text-muted mt-1">No Image</small>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="product-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%;">
+                                                        <i class="bi bi-box-seam" style="font-size:28px; color: #6c757d;"></i>
+                                                        <small class="text-muted mt-1">No Image</small>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                             <h6 class="card-title mb-1" style="font-size:.98rem;">
                                                 <?php echo htmlspecialchars($p['product_name']); ?>
@@ -157,14 +173,21 @@ $user_id = $_SESSION['user_id'];
                                 </div>
                                 <div class="product-info">
                                     <div class="d-flex gap-3 mb-4">
-                                        <div class="product-placeholder" style="height:200px; flex: 0 0 200px;">
-                                            <i class="bi bi-box-seam" style="font-size:48px;"></i>
+                                        <div class="main-product-image" style="height:200px; flex: 0 0 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                                            <img id="mainProductImage" src="" alt="Product Image" style="max-height: 100%; max-width: 100%; object-fit: contain; display: none;">
+                                            <div class="product-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                                <i class="bi bi-box-seam" style="font-size:48px; color: #6c757d;"></i>
+                                                <small class="text-muted mt-2">No Image Available</small>
+                                            </div>
                                         </div>
                                         <div class="d-flex flex-column gap-2" style="flex: 1;">
-                                            <img src="product-thumbnail-1.jpg" class="img-thumbnail"
-                                                style="width:80px; height:80px; object-fit:cover;">
-                                            <img src="product-thumbnail-2.jpg" class="img-thumbnail"
-                                                style="width:80px; height:80px; object-fit:cover;">
+                                            <!-- Thumbnail images can be added here if you have multiple images -->
+                                            <div class="thumbnail-placeholder img-thumbnail" style="width:80px; height:80px; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                                                <i class="bi bi-image" style="font-size:20px; color: #6c757d;"></i>
+                                            </div>
+                                            <div class="thumbnail-placeholder img-thumbnail" style="width:80px; height:80px; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                                                <i class="bi bi-image" style="font-size:20px; color: #6c757d;"></i>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -186,11 +209,11 @@ $user_id = $_SESSION['user_id'];
                                             </div>
                                             <div class="col-6">
                                                 <label class="form-label small text-muted">Weight</label>
-                                                <div id="productWeight"></div>
+                                                <div id="productWeight">N/A</div>
                                             </div>
                                             <div class="col-6">
                                                 <label class="form-label small text-muted">Brand</label>
-                                                <div id="productBrand"></div>
+                                                <div id="productBrand">MJI Phil</div>
                                             </div>
                                             <div class="col-6">
                                                 <label class="form-label small text-muted">Category</label>
@@ -206,7 +229,11 @@ $user_id = $_SESSION['user_id'];
 
                                     <div class="mb-4">
                                         <h6 class="mb-2">Technical Specifications</h6>
-                                        <div class="text-muted small" id="productSpecs"></div>
+                                        <div class="text-muted small" id="productSpecs">
+                                            <div>• High-quality construction materials</div>
+                                            <div>• Durable and long-lasting</div>
+                                            <div>• Industry standard compliant</div>
+                                        </div>
                                     </div>
 
                                     <div class="d-flex align-items-center gap-3">

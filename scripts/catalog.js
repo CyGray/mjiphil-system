@@ -32,10 +32,11 @@ const CatalogManager = (() => {
         const res = await cartRequest('get');
         if (res.success && Array.isArray(res.cart)) {
             cart = res.cart.map(item => ({
-            id: item.product_id,
-            name: item.product_name,
-            price: item.price,
-            quantity: parseInt(item.quantity)
+                id: item.product_id,
+                name: item.product_name,
+                price: item.price,
+                quantity: parseInt(item.quantity),
+                image: item.image_url || '' // Add image URL from cart response
             }));
         } else {
             cart = []; // fallback to empty array
@@ -44,7 +45,6 @@ const CatalogManager = (() => {
         updateCartDisplay();
         updateCartCount();
     }
-
 
     function saveCartToStorage() {
         try {
@@ -90,7 +90,6 @@ const CatalogManager = (() => {
         }
     }
 
-
     async function removeFromCart(productId) {
         const res = await cartRequest('delete', { product_id: productId });
         if (res.success) {
@@ -99,27 +98,6 @@ const CatalogManager = (() => {
             alert(res.message);
         }
     }
-
-
-    async function updateCartCount() {
-    // Compute total items
-    const totalItems = Array.isArray(cart)
-        ? cart.reduce((sum, item) => sum + (item.quantity || 0), 0)
-        : 0;
-
-    elements.cartCountBadge.textContent = totalItems;
-    elements.cartCountBadge.style.display = totalItems > 0 ? "inline-block" : "none";
-
-    // Sync to DB (optional)
-    try {
-        // Replace cart contents in DB with current version
-        // (simpler than incremental sync)
-        await cartRequest('sync', { cart: JSON.stringify(cart) });
-    } catch (err) {
-        console.error("Failed to sync cart count:", err);
-    }
-    }
-
 
     function calculateCartTotals() {
         const subtotal = cart.reduce((sum, item) => {
@@ -157,8 +135,18 @@ const CatalogManager = (() => {
             cartHTML += `
                 <div class="cart-item mb-3 p-3 border rounded">
                     <div class="d-flex gap-3 align-items-center">
-                        <div class="product-placeholder" style="width:70px; height:70px; flex-shrink: 0;">
-                            <i class="bi bi-box-seam"></i>
+                        <div class="cart-item-image" style="width:70px; height:70px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 4px; overflow: hidden;">
+                            ${item.image ? 
+                                `<img src="${item.image}" alt="${sanitizeText(item.name)}" 
+                                      style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                 <div class="product-placeholder" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%;">
+                                     <i class="bi bi-box-seam" style="font-size:20px; color: #6c757d;"></i>
+                                 </div>` :
+                                `<div class="product-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%;">
+                                     <i class="bi bi-box-seam" style="font-size:20px; color: #6c757d;"></i>
+                                 </div>`
+                            }
                         </div>
                         <div class="flex-grow-1">
                             <h6 class="mb-1">${sanitizeText(item.name)}</h6>
@@ -236,7 +224,6 @@ const CatalogManager = (() => {
         });
     }
 
-
     async function updateItemQuantity(productId, newQuantity) {
         console.log(`[Cart] Updating product ${productId} → qty ${newQuantity}`);
         
@@ -252,7 +239,6 @@ const CatalogManager = (() => {
             alert(res.message);
         }
     }
-
 
     function showAddToCartFeedback() {
         const btn = elements.addToCartBtn;
@@ -312,53 +298,52 @@ const CatalogManager = (() => {
     }
 
     async function confirmOrder() {
-    try {
-        console.log("[Order] Starting order creation...");
-        
-        const response = await fetch('./api/order.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=create'
-        });
-
-        // First check if response is OK
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // Get the response text first to debug
-        const responseText = await response.text();
-        console.log("[Order] Raw response:", responseText);
-
-        // Try to parse as JSON
-        let data;
         try {
-            data = JSON.parse(responseText);
-        } catch (parseError) {
-            console.error("[Order] JSON parse error:", parseError);
-            throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
-        }
+            console.log("[Order] Starting order creation...");
+            
+            const response = await fetch('./api/order.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=create'
+            });
 
-        console.log("[Order] Parsed response:", data);
+            // First check if response is OK
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-        if (data.success) {
-            showOrderSuccessModal();
-            // Clear local cart state
-            cart = [];
-            updateCartDisplay();
-            updateCartCount();
-            closeCheckout();
-        } else {
-            alert(data.message || "Failed to create order.");
+            // Get the response text first to debug
+            const responseText = await response.text();
+            console.log("[Order] Raw response:", responseText);
+
+            // Try to parse as JSON
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error("[Order] JSON parse error:", parseError);
+                throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+            }
+
+            console.log("[Order] Parsed response:", data);
+
+            if (data.success) {
+                showOrderSuccessModal();
+                // Clear local cart state
+                cart = [];
+                updateCartDisplay();
+                updateCartCount();
+                closeCheckout();
+            } else {
+                alert(data.message || "Failed to create order.");
+            }
+        } catch (err) {
+            console.error("Order creation failed:", err);
+            alert("Order creation failed: " + err.message);
         }
-    } catch (err) {
-        console.error("Order creation failed:", err);
-        alert("Order creation failed: " + err.message);
     }
-}
-
 
     function showOrderSuccessModal() {
         // Create success modal
@@ -405,34 +390,84 @@ const CatalogManager = (() => {
     }
 
     // === Product Details ===
-    function showProductDetails(productCard) {
-        const id = parseInt(productCard.dataset.id); // ✅ new line
-        const name = productCard.querySelector('.card-title')?.textContent?.trim() || 'Unknown Product';
-        const price = productCard.querySelector('strong')?.textContent?.trim() || '₱0.00';
-        const desc = productCard.querySelector('.text-muted')?.textContent?.trim() || 'No description available';
-        const category = productCard.dataset.cat || 'uncategorized';
-
-        // ✅ include id in currentProduct
-        currentProduct = { id, name, price, desc, category };
-        currentQuantity = 1;
-
-        // Update sidebar content
-        document.getElementById('productTitle').textContent = name;
-        document.getElementById('productPrice').textContent = price;
-        document.getElementById('productDesc').textContent = desc;
-
-        const categoryDisplay = category.charAt(0).toUpperCase() + category.slice(1);
-        document.getElementById('productCategory').textContent = categoryDisplay;
-
-        document.getElementById('productBrand').textContent = 'N/A';
-        document.getElementById('productCode').textContent = 'N/A';
-        document.getElementById('productWeight').textContent = 'N/A';
-        document.getElementById('productSpecs').innerHTML = '<div class="text-muted">No specifications available</div>';
-
-        elements.quantityDisplay.textContent = '1';
-        elements.sidebar.classList.add('active');
+   // === Product Details ===
+function showProductDetails(productCard) {
+    const id = parseInt(productCard.dataset.id);
+    const name = productCard.querySelector('.card-title')?.textContent?.trim() || 'Unknown Product';
+    const price = productCard.querySelector('strong')?.textContent?.trim() || '₱0.00';
+    const desc = productCard.querySelector('.text-muted')?.textContent?.trim() || 'No description available';
+    const category = productCard.dataset.cat || 'uncategorized';
+    
+    // Get image URL from data attribute OR from the img element in the card
+    let image = productCard.dataset.image || '';
+    
+    // If no image in data attribute, try to get it from the img element
+    if (!image) {
+        const imgElement = productCard.querySelector('img');
+        if (imgElement && imgElement.src) {
+            image = imgElement.src;
+        }
     }
 
+    console.log('Product details:', { id, name, image }); // Debug log
+
+    // Include image in currentProduct
+    currentProduct = { id, name, price, desc, category, image };
+    currentQuantity = 1;
+
+    // Update sidebar content
+    document.getElementById('productTitle').textContent = name;
+    document.getElementById('productPrice').textContent = price;
+    document.getElementById('productDesc').textContent = desc;
+
+    const categoryDisplay = category.charAt(0).toUpperCase() + category.slice(1);
+    document.getElementById('productCategory').textContent = categoryDisplay;
+
+    document.getElementById('productBrand').textContent = 'MJI Phil';
+    document.getElementById('productCode').textContent = `PROD-${id.toString().padStart(4, '0')}`;
+    document.getElementById('productWeight').textContent = 'N/A';
+    document.getElementById('productSpecs').innerHTML = `
+        <div>• High-quality construction materials</div>
+        <div>• Durable and long-lasting</div>
+        <div>• Industry standard compliant</div>
+    `;
+
+    // Update product image in sidebar
+    updateProductImageInSidebar(image, name);
+
+    elements.quantityDisplay.textContent = '1';
+    elements.sidebar.classList.add('active');
+}
+
+function updateProductImageInSidebar(imageUrl, productName) {
+    const mainProductImage = document.getElementById('mainProductImage');
+    const placeholder = document.querySelector('.main-product-image .product-placeholder');
+    
+    console.log('Updating sidebar image:', imageUrl); // Debug log
+    
+    if (imageUrl && imageUrl !== 'null' && imageUrl.trim() !== '') {
+        mainProductImage.src = imageUrl;
+        mainProductImage.alt = productName;
+        mainProductImage.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        
+        // Add error handling for broken images
+        mainProductImage.onerror = function() {
+            console.log('Image failed to load:', imageUrl);
+            this.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'flex';
+        };
+        
+        // Also handle successful load
+        mainProductImage.onload = function() {
+            console.log('Image loaded successfully:', imageUrl);
+        };
+    } else {
+        console.log('No image URL provided, showing placeholder');
+        mainProductImage.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'flex';
+    }
+}
 
     function closeSidebar() {
         elements.sidebar.classList.remove('active');
@@ -479,7 +514,6 @@ const CatalogManager = (() => {
 
         return response.json();
     }
-
 
     // === Search and Filter ===
     function applyFilters() {
@@ -582,17 +616,17 @@ const CatalogManager = (() => {
 
         clearCart: async () => {
             try {
-            const res = await cartRequest('clear');
-            if (res.success) {
-                cart = [];
-                updateCartDisplay();
-                updateCartCount();
-                console.log('Cart cleared.');
-            } else {
-                console.error('Error clearing cart:', res.message);
-            }
+                const res = await cartRequest('clear');
+                if (res.success) {
+                    cart = [];
+                    updateCartDisplay();
+                    updateCartCount();
+                    console.log('Cart cleared.');
+                } else {
+                    console.error('Error clearing cart:', res.message);
+                }
             } catch (err) {
-            console.error('Failed to clear cart:', err);
+                console.error('Failed to clear cart:', err);
             }
         }
     };
@@ -604,7 +638,6 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         CatalogManager.loadCartFromDatabase();
     });
-
 } else {
     CatalogManager.init();
     document.addEventListener('DOMContentLoaded', () => {

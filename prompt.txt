@@ -1,13 +1,10 @@
-I want you to add these nav links and edits to the menu.php:
-1. catalog (if not in catalog)
-2. inventory (if not inventory + role=admin)
-3. about us (grayed out)
-4. settings (grayed out)
+I need your help adding a system to connect an img to the products when we add a product. When adding,
+we can click the img url input to open the file explorer to upload a photo, then it will be added to
+./assets/products/img/{name}.{ext png|jpg|jpeg|webp if possible|svg if possible}, and the 
+URL will be added to the database.
 
-5. red - exit icon - Logout - small
 
-If you need access to more file for context, let me know before we move on to actually coding - never assume content of a file.
-
+If you need access to other files, do ask for it. Never assume contents of a file.
 
 ## 📁 Folder Structure
 
@@ -76,313 +73,9 @@ If you need access to more file for context, let me know before we move on to ac
    └─ logs
       └─ cart-api.log
 
-// menu.php
-<link rel="stylesheet" href="../style/components.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-<?php
-    $current_page = basename($_SERVER['PHP_SELF']);
-?>
-
-<div class="col-sm-2 sidebar d-flex flex-column">
-    <div class="sidebar-header">
-        <img
-            src="./assets/nobg-logo.png"
-            alt="MJIPhil Construction Logo"
-            class="company-logo"
-        />
-        <span class="company-name">MJIPHIL CONSTRUCTION</span>
-    </div>
-
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'dashboard.php') ? 'active' : ''; ?>" href="dashboard.php">
-                <i class="bi bi-speedometer2 me-2"></i>DASHBOARD
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'catalog.php') ? 'active' : ''; ?>" href="catalog.php">
-                <i class="bi bi-grid-3x3-gap-fill me-2"></i>CATALOG
-            </a>
-        </li>
-    </ul>
-    
-    <div class="logout-container">
-        <a class="nav-link logout-btn" href="./scripts/logout.php">
-            <i class="bi bi-box-arrow-right me-2"></i>LOGOUT
-        </a>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const logoutBtn = document.querySelector('.logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('Are you sure you want to logout?')) {
-                    window.location.href = this.getAttribute('href');
-                }
-            });
-        }
-    });
-</script>
-
-
-// dashboard.php
-<?php
-require_once 'auth_check.php';
-require_once './config.php';
-
-$user_id = $_SESSION['user_id'];
-$userName = $_SESSION['name'] ?? 'User';
-$firstName = explode(' ', $userName)[0];
-
-/* ===============================
-   FETCH RECENT ORDERS
-================================= */
-$orderQuery = $pdo->prepare("
-    SELECT o.order_id, o.order_date, o.total_amount, s.status_name,
-           (SELECT p.product_name 
-            FROM order_item oi 
-            JOIN product p ON oi.product_id = p.product_id 
-            WHERE oi.order_id = o.order_id LIMIT 1) AS first_item
-    FROM `order` o
-    JOIN order_status s ON o.order_status_id = s.order_status_id
-    WHERE o.user_id = ?
-    ORDER BY o.order_date DESC
-    LIMIT 5
-");
-$orderQuery->execute([$user_id]);
-$orders = $orderQuery->fetchAll(PDO::FETCH_ASSOC);
-
-/* ===============================
-   FETCH USER CART
-================================= */
-$cartQuery = $pdo->prepare("
-    SELECT p.product_name, p.price, ci.quantity
-    FROM cart_item ci
-    JOIN cart c ON ci.cart_id = c.cart_id
-    JOIN product p ON ci.product_id = p.product_id
-    WHERE c.user_id = ?
-");
-$cartQuery->execute([$user_id]);
-$cartItems = $cartQuery->fetchAll(PDO::FETCH_ASSOC);
-
-$cartSubtotal = 0;
-foreach ($cartItems as $item) {
-    $cartSubtotal += $item['price'] * $item['quantity'];
-}
-?>
-
-<?php $title = "MJIPhil Dashboard"; ?>
-
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?php echo $title; ?></title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-        <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Cutive+Mono&family=Monomaniac+One&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="./styles/components.css">
-        <link rel="stylesheet" href="./styles/dashboard.css">
-        <style>
-            a.btn-view {
-            text-decoration: none !important;
-            color: white !important;
-            }
-        </style>
-
-
-    </head>
-    
-    <body>
-        <?php include './menu.php'; ?>
-        
-        <div class="main-content">
-            <div class="container-fluid">
-                <div class="hero-banner">
-                    <img src="./assets/banner.png" alt="MjiPhil Construction Supplies" class="banner-image">
-                    <div class="banner-overlay">
-                        <div class="banner-content">
-                            <h1>MJIPhil Construction Supplies</h1>
-                            <p>Quality Tools and Materials for your construction needs</p>
-                            <a href="catalog.php" class="btn-shop-now">Shop Now</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-content">
-                    <div class="row">
-                    <div class="col-lg-8">
-                        <div class="welcome-section">
-                            <h2>Welcome, <?php echo htmlspecialchars($firstName); ?></h2>
-                            <p>What do you want to do today?</p>
-                            <div class="search-box">
-                                <i class="bi bi-search"></i>
-                                <input type="text" class="form-control" placeholder="Search Products here...">
-                            </div>
-                        </div>
-
-                        <div class="featured-products">
-                            <h3>Featured Products</h3>
-                            <div class="product-grid">
-
-                                <div class="product-card">
-                                    <img src="./assets/products/portland-cement.jpg" alt="Portland Cement" class="product-image">
-                                    <h4>Portland Premium Cement (50kg)</h4>
-                                    <p>High-quality cement for construction projects</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱285.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-
-                                <div class="product-card">
-                                    <img src="./assets/products/drill.jpg" alt="Cordless Drill" class="product-image">
-                                    <h4>VidMac Cordless Drill 20V</h4>
-                                    <p>Powerful and lightweight drill with a 20V battery</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱3,450.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-
-                                <div class="product-card">
-                                    <img src="./assets/products/steel-bars.jpg" alt="Steel Rebar" class="product-image">
-                                    <h4>Steel Rebar 16mm (Grade 60)</h4>
-                                    <p>High-grade reinforcement bars for concrete structures</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱750.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-
-                                <div class="product-card">
-                                    <img src="./assets/products/hollow-blocks.jpg" alt="Hollow Blocks" class="product-image">
-                                    <h4>BuildFill Hollow Blocks (4x8x16 in)</h4>
-                                    <p>Standard concrete hollow blocks</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱18.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="sidebar-section">
-                            <h3>Your Recent Orders</h3>
-                            <div class="orders-list">
-                                <?php if (empty($orders)): ?>
-                                    <div class="text-muted small">No recent orders found.</div>
-                                <?php else: ?>
-                                    <?php foreach ($orders as $order): ?>
-                                        <div class="order-item mb-3 p-2 border rounded">
-                                            <div class="order-header d-flex justify-content-between">
-                                                <span class="fw-bold">Order #<?php echo $order['order_id']; ?></span>
-                                                <span class="text-muted small">
-                                                    <?php echo date('M d, Y', strtotime($order['order_date'])); ?>
-                                                </span>
-                                            </div>
-                                            <div class="order-details text-truncate small text-muted">
-                                                <?php echo htmlspecialchars($order['first_item']); ?>
-                                            </div>
-                                            <div class="order-footer d-flex justify-content-between align-items-center mt-2">
-                                                <span class="fw-bold text-danger">₱<?php echo number_format($order['total_amount'], 2); ?></span>
-                                                <span class="badge bg-secondary"><?php echo $order['status_name']; ?></span>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- Live Cart -->
-                        <div class="sidebar-section mt-4">
-                            <h3>Your Cart</h3>
-                            <?php if (empty($cartItems)): ?>
-                                <div class="cart-empty text-center">
-                                    <img src="./assets/icons/hard-hat.png" alt="Empty Cart" width="80">
-                                    <p class="text-muted mt-2 mb-1">Your cart is currently empty.</p>
-                                    <a href="catalog.php" class="btn-shop-now-small btn btn-sm btn-dark mt-2">Shop Now</a>
-                                </div>
-                            <?php else: ?>
-                                <div class="cart-items">
-                                    <?php foreach ($cartItems as $item): ?>
-                                        <div class="cart-item d-flex justify-content-between align-items-center border-bottom py-2">
-                                            <div>
-                                                <strong class="d-block" style="font-size:0.9rem;">
-                                                    <?php echo htmlspecialchars($item['product_name']); ?>
-                                                </strong>
-                                                <small class="text-muted">
-                                                    ₱<?php echo number_format($item['price'], 2); ?> × <?php echo $item['quantity']; ?>
-                                                </small>
-                                            </div>
-                                            <span class="fw-bold text-danger">
-                                                ₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?>
-                                            </span>
-                                        </div>
-                                    <?php endforeach; ?>
-                                    <div class="cart-total mt-3 d-flex justify-content-between">
-                                        <span class="fw-bold">Subtotal:</span>
-                                        <span class="fw-bold text-dark">₱<?php echo number_format($cartSubtotal, 2); ?></span>
-                                    </div>
-                                    <div class="text-center mt-3">
-                                        <a href="catalog.php" class="btn btn-sm btn-outline-dark">Continue Shopping</a>
-                                        <a href="catalog.php#checkout" class="btn-view">Checkout</a>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            document.querySelector('.search-box input').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const products = document.querySelectorAll('.product-card');
-                
-                products.forEach(product => {
-                    const title = product.querySelector('h4').textContent.toLowerCase();
-                    const description = product.querySelector('p').textContent.toLowerCase();
-                    
-                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
-                        product.style.display = 'block';
-                    } else {
-                        product.style.display = 'none';
-                    }
-                });
-            });
-
-            document.querySelectorAll('.btn-view').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const productTitle = this.closest('.product-card').querySelector('h4').textContent;
-                    window.location.href = 'catalog.php';
-                });
-            });
-
-            document.querySelectorAll('.btn-view-details').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const orderNumber = this.closest('.order-item').querySelector('.order-number').textContent;
-                    window.location.href = 'order-history.php';
-                });
-            });
-        </script>
-    </body>
-</html>
-
 
 // inventory.php
+
 <?php
 require_once 'auth_check.php';
 checkAdminAccess();
@@ -788,355 +481,477 @@ try {
 </body>
 </html>
 
-// catalog.php
+// scripts/inventory.js
 
-<?php
-    require_once 'auth_check.php';
-    $title = "MjiPhil Catalog";
-    require_once 'config.php';
-    if (!isset($_SESSION['user_id'])) {
-        echo json_encode(['success' => false, 'message' => 'Not logged in']);
-        exit;
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-search functionality
+    const searchInput = document.getElementById('headerSearch');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.form.submit();
+            }, 500);
+        });
     }
 
-$user_id = $_SESSION['user_id'];
+    // Add form validation
+    const addItemForm = document.getElementById('addItemForm');
+    if (addItemForm) {
+        addItemForm.addEventListener('submit', function(e) {
+            const price = this.querySelector('input[name="price"]');
+            const quantity = this.querySelector('input[name="stock_quantity"]');
+            
+            if (parseFloat(price.value) < 0) {
+                e.preventDefault();
+                alert('Price cannot be negative');
+                price.focus();
+                return;
+            }
+            
+            if (parseInt(quantity.value) < 0) {
+                e.preventDefault();
+                alert('Quantity cannot be negative');
+                quantity.focus();
+                return;
+            }
+        });
+    }
+});
 
-    // Get products from database with categories and images
-    try {
-        $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
-                        c.category_name, c.category_id,
-                        pi.image_url,
-                        i.stock_quantity
-                  FROM product p
-                  INNER JOIN category c ON p.category_id = c.category_id
-                  LEFT JOIN product_image pi ON p.product_id = pi.product_id
-                  LEFT JOIN inventory i ON p.product_id = i.product_id
-                  WHERE i.stock_quantity > 0
-                  ORDER BY p.product_name";
+// Sort table function
+function sortTable(column) {
+    const url = new URL(window.location.href);
+    const currentSort = url.searchParams.get('sort');
+    const currentOrder = url.searchParams.get('order');
+    
+    let newOrder = 'asc';
+    if (currentSort === column && currentOrder === 'asc') {
+        newOrder = 'desc';
+    }
+    
+    url.searchParams.set('sort', column);
+    url.searchParams.set('order', newOrder);
+    window.location.href = url.toString();
+}
+
+// Modal functions
+function openAddModal() {
+    document.getElementById('addItemModal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('addItemModal').classList.remove('show');
+}
+
+function editItem(productId) {
+    if (confirm('Edit item ' + productId + '?')) {
+        // You can implement edit functionality here
+        // For now, just show a message
+        alert('Edit functionality for item ' + productId + ' will be implemented soon.');
+    }
+}
+
+function deleteItem(productId) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        // You can implement delete functionality here
+        fetch('delete_item.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'product_id=' + productId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Item deleted successfully');
+                location.reload();
+            } else {
+                alert('Error deleting item: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting item: ' + error);
+        });
+    }
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        window.location.href = 'logout.php';
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('addItemModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl + N to open add modal
+    if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        openAddModal();
+    }
+    
+    // Escape to close modal
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// utils/setup_database.php
+
+<?php
+// Database setup and initialization script
+class DatabaseSetup {
+    private $pdo;
+    private $db_host = '127.0.0.1';
+    private $db_user = 'root';
+    private $db_pass = '';
+    private $db_name = 'mjiphil_catalog';
+    
+    public function __construct() {
+        try {
+            // First connect without database to create it
+            $this->pdo = new PDO("mysql:host={$this->db_host}", $this->db_user, $this->db_pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+        } catch (PDOException $e) {
+            die("Database connection failed: " . $e->getMessage());
+        }
+    }
+    
+    public function setupDatabase() {
+        try {
+            // Create database
+            $this->pdo->exec("CREATE DATABASE IF NOT EXISTS {$this->db_name}");
+            $this->pdo->exec("USE {$this->db_name}");
+            
+            echo "Database created successfully.<br>";
+            
+            // Create tables
+            $this->createTables();
+            
+            // Insert default data
+            $this->insertDefaultData();
+            
+            // Sync JSON data
+            $this->syncJsonData();
+            
+            echo "Database setup completed successfully!";
+            
+        } catch (PDOException $e) {
+            die("Database setup failed: " . $e->getMessage());
+        }
+    }
+    
+    private function createTables() {
+        $tables = [
+            "CREATE TABLE IF NOT EXISTS user (
+                user_id INT AUTO_INCREMENT PRIMARY KEY,
+                first_name VARCHAR(100) NOT NULL,
+                last_name VARCHAR(100) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                phone VARCHAR(20),
+                role ENUM('admin', 'regular') DEFAULT 'regular',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS address (
+                address_id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                street VARCHAR(255) NOT NULL,
+                city VARCHAR(100) NOT NULL,
+                province VARCHAR(100) NOT NULL,
+                postal_code VARCHAR(20) NOT NULL,
+                is_default BOOLEAN DEFAULT FALSE,
+                address_type ENUM('billing', 'shipping', 'both') DEFAULT 'both',
+                FOREIGN KEY (user_id) REFERENCES user(user_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS category (
+                category_id INT AUTO_INCREMENT PRIMARY KEY,
+                category_name VARCHAR(100) NOT NULL UNIQUE,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS product (
+                product_id INT AUTO_INCREMENT PRIMARY KEY,
+                category_id INT NOT NULL,
+                product_name VARCHAR(150) NOT NULL,
+                description TEXT,
+                price DECIMAL(10,2) NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (category_id) REFERENCES category(category_id)
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_category_id (category_id),
+                INDEX idx_is_active (is_active)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS product_image (
+                image_id INT AUTO_INCREMENT PRIMARY KEY,
+                product_id INT NOT NULL,
+                image_url VARCHAR(255) NOT NULL,
+                is_primary BOOLEAN DEFAULT FALSE,
+                alt_text VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES product(product_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_product_id (product_id),
+                INDEX idx_is_primary (is_primary)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS inventory (
+                inventory_id INT AUTO_INCREMENT PRIMARY KEY,
+                product_id INT UNIQUE NOT NULL,
+                stock_quantity INT DEFAULT 0,
+                low_stock_threshold INT DEFAULT 10,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES product(product_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS cart (
+                cart_id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(user_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS cart_item (
+                cart_item_id INT AUTO_INCREMENT PRIMARY KEY,
+                cart_id INT NOT NULL,
+                product_id INT NOT NULL,
+                quantity INT NOT NULL CHECK (quantity > 0),
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (cart_id) REFERENCES cart(cart_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES product(product_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                UNIQUE KEY unique_cart_product (cart_id, product_id),
+                INDEX idx_cart_id (cart_id),
+                INDEX idx_product_id (product_id)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS order_status (
+                order_status_id INT AUTO_INCREMENT PRIMARY KEY,
+                status_name ENUM('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled') NOT NULL UNIQUE,
+                description VARCHAR(255)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS `order` (
+                order_id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                order_status_id INT NOT NULL,
+                order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                total_amount DECIMAL(10,2) NOT NULL,
+                shipping_address_id INT,
+                billing_address_id INT,
+                notes TEXT,
+                FOREIGN KEY (user_id) REFERENCES user(user_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (order_status_id) REFERENCES order_status(order_status_id)
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                FOREIGN KEY (shipping_address_id) REFERENCES address(address_id)
+                    ON DELETE SET NULL ON UPDATE CASCADE,
+                FOREIGN KEY (billing_address_id) REFERENCES address(address_id)
+                    ON DELETE SET NULL ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id),
+                INDEX idx_order_date (order_date),
+                INDEX idx_order_status (order_status_id)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS order_item (
+                order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id INT NOT NULL,
+                product_id INT NOT NULL,
+                quantity INT NOT NULL CHECK (quantity > 0),
+                unit_price DECIMAL(10,2) NOT NULL,
+                subtotal DECIMAL(10,2) NOT NULL,
+                FOREIGN KEY (order_id) REFERENCES `order`(order_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES product(product_id)
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_order_id (order_id),
+                INDEX idx_product_id (product_id)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS payment_method (
+                payment_method_id INT AUTO_INCREMENT PRIMARY KEY,
+                method_name ENUM('Cash', 'GCash', 'Bank Transfer', 'Credit Card') NOT NULL UNIQUE,
+                description VARCHAR(255)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS payment (
+                payment_id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id INT NOT NULL,
+                payment_method_id INT NOT NULL,
+                amount_paid DECIMAL(10,2) NOT NULL,
+                payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                payment_status ENUM('Pending', 'Confirmed', 'Refunded') DEFAULT 'Pending',
+                transaction_reference VARCHAR(100),
+                notes TEXT,
+                FOREIGN KEY (order_id) REFERENCES `order`(order_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (payment_method_id) REFERENCES payment_method(payment_method_id)
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_order_id (order_id),
+                INDEX idx_payment_date (payment_date)
+            )",
+            
+            "CREATE TABLE IF NOT EXISTS user_payment_method (
+                user_payment_id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                payment_method_id INT NOT NULL,
+                account_identifier VARCHAR(100),
+                is_default BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(user_id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (payment_method_id) REFERENCES payment_method(payment_method_id)
+                    ON DELETE RESTRICT ON UPDATE CASCADE,
+                INDEX idx_user_id (user_id),
+                UNIQUE KEY unique_user_payment (user_id, payment_method_id, account_identifier)
+            )"
+        ];
         
-        $stmt = $pdo->query($query);
-        $products = $stmt->fetchAll();
-        
-        // Group products by category for the catalog display
-        $categorized_products = [];
-        foreach ($products as $product) {
-            $categorized_products[$product['category_name']][] = $product;
+        foreach ($tables as $tableSql) {
+            $this->pdo->exec($tableSql);
         }
         
-    } catch (PDOException $e) {
-        error_log("Error loading products: " . $e->getMessage());
-        $categorized_products = [];
+        echo "Tables created successfully.<br>";
     }
-
-    // Get categories for filter
-    try {
-        $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
-        $categories = $stmt->fetchAll();
-    } catch (PDOException $e) {
-        error_log("Error loading categories: " . $e->getMessage());
-        $categories = [];
+    
+    private function insertDefaultData() {
+        // Insert admin users
+        $admins = [
+            ['Roel', 'Admin', 'roel@mjiphil.com', 'cm9lbDEyMw==', 'admin'],
+            ['Kyle', 'Admin', 'kyle@mjiphil.com', 'a3lsZTEyMw==', 'admin'],
+            ['Wilbert', 'Admin', 'wilbert@mjiphil.com', 'd2lsYmVydDEyMw==', 'admin'],
+            ['Gwen', 'Admin', 'gwen@mjiphil.com', 'Z3dlbjEyMw==', 'admin'],
+            ['JC', 'Admin', 'jc@mjiphil.com', 'amMxMjM=', 'admin'],
+            ['Nikolai', 'Admin', 'nikolai@mjiphil.com', 'bmlrb2xhaTEyMw==', 'admin']
+        ];
+        
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO user (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)");
+        foreach ($admins as $admin) {
+            $stmt->execute($admin);
+        }
+        
+        // Insert categories
+        $categories = [
+            ['Tools', 'Construction tools and equipment'],
+            ['Materials', 'Building and construction materials'],
+            ['Safety Gear', 'Personal protective equipment'],
+            ['Essentials', 'Essential construction supplies'],
+            ['Electrical', 'Electrical supplies and equipment'],
+            ['Plumbing', 'Plumbing materials and fixtures'],
+            ['Hardware', 'Hardware and fasteners'],
+            ['Paint & Supplies', 'Paints, coatings, and application tools'],
+            ['Concrete & Masonry', 'Concrete, cement, and masonry supplies'],
+            ['Lumber & Wood', 'Lumber, plywood, and wood products']
+        ];
+        
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO category (category_name, description) VALUES (?, ?)");
+        foreach ($categories as $category) {
+            $stmt->execute($category);
+        }
+        
+        // Insert order statuses with descriptions
+        $statuses = [
+            ['Pending', 'Order has been placed but not yet paid'],
+            ['Paid', 'Payment has been confirmed'],
+            ['Shipped', 'Order has been shipped to customer'],
+            ['Completed', 'Order has been delivered and completed'],
+            ['Cancelled', 'Order has been cancelled']
+        ];
+        
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO order_status (status_name, description) VALUES (?, ?)");
+        foreach ($statuses as $status) {
+            $stmt->execute($status);
+        }
+        
+        // Insert payment methods with descriptions
+        $methods = [
+            ['Cash', 'Cash on delivery or pickup'],
+            ['GCash', 'GCash mobile payment'],
+            ['Bank Transfer', 'Bank transfer or deposit'],
+            ['Credit Card', 'Credit card payment']
+        ];
+        
+        $stmt = $this->pdo->prepare("INSERT IGNORE INTO payment_method (method_name, description) VALUES (?, ?)");
+        foreach ($methods as $method) {
+            $stmt->execute($method);
+        }
+        
+        echo "Default data inserted successfully.<br>";
     }
-?>
-
-<!DOCTYPE html>
-<html lang="en">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?php echo $title; ?></title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-        <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Cutive+Mono&family=Monomaniac+One&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="./styles/components.css">
-        <link rel="stylesheet" href="./styles/catalog.css">
-    </head>
-
-    <body>
-        <?php include './menu.php'; ?>
-
-        <div class="main-content">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div class="d-flex align-items-center" style="gap:.5rem;">
-                                    <input id="catalogSearch" class="form-control form-control-sm" style="min-width:220px;"
-                                        placeholder="Search products here..." />
-                                    <button class="btn btn-sm d-flex align-items-center gap-2 main-cart-btn"
-                                        style="background-color: #6b0f0f; color: white;">
-                                        <i class="bi bi-cart3"></i>
-                                        <span>Cart</span>
-                                        <span class="badge bg-light text-dark cart-count" style="display: none;">0</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <button class="chip active" data-cat="all">All items</button>
-                                    <button class="chip" data-cat="tools">Tools and Equipment</button>
-                                    <button class="chip" data-cat="materials">Building Materials</button>
-                                    <button class="chip" data-cat="plumbing">Plumbing Supplies</button>
-                                    <button class="chip" data-cat="safety">Safety Gear</button>
-                                </div>
-                            </div>
-
-                            <div class="row" id="productGrid">
-                                <?php             
-                                try {
-                                    // Map category names to your existing category slugs
-                                    $categoryMap = [
-                                        'Tools' => 'tools',
-                                        'Materials' => 'materials',
-                                        'Safety Gear' => 'safety',
-                                        'Essentials' => 'materials',
-                                        'Electrical' => 'tools',
-                                        'Plumbing' => 'materials',
-                                        'Hardware' => 'tools',
-                                        'Paint & Supplies' => 'materials',
-                                        'Concrete & Masonry' => 'materials',
-                                        'Lumber & Wood' => 'materials'
-                                    ];
-                                    
-                                    foreach ($products as $p) {
-                                        $catSlug = $categoryMap[$p['category_name']] ?? 'materials';
-                                        ?>
-                                <div class="col-6 col-md-4 col-lg-3 mb-4 product-card"
-                                    data-id="<?php echo $p['product_id']; ?>"
-                                    data-name="<?php echo strtolower($p['product_name']); ?>"
-                                    data-cat="<?php echo $catSlug; ?>" data-price="<?php echo $p['price']; ?>"
-                                    data-desc="<?php echo htmlspecialchars($p['description']); ?>">
-                                    <div class="card h-100 shadow-sm">
-                                        <div class="card-body d-flex flex-column">
-                                            <div class="product-placeholder mb-3">
-                                                <i class="bi bi-box-seam" style="font-size:28px;"></i>
-                                            </div>
-                                            <h6 class="card-title mb-1" style="font-size:.98rem;">
-                                                <?php echo htmlspecialchars($p['product_name']); ?>
-                                            </h6>
-                                            <p class="text-muted small mb-3">
-                                                <?php echo htmlspecialchars($p['description']); ?>
-                                            </p>
-                                            <div class="mt-auto d-flex justify-content-between align-items-center">
-                                                <strong class="text-dark">₱<?php echo number_format($p['price'], 2); ?></strong>
-                                                <button class="btn btn-sm view-product"
-                                                    style="background-color: #6b0f0f; color: white;">View</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php
-                                    }
-                                    
-                                } catch (PDOException $e) {
-                                    error_log("Error loading products: " . $e->getMessage());
-                                    echo '<div class="col-12 text-center text-muted">Unable to load products at this time.</div>';
-                                }
-                                ?>
-                            </div>
-
-                            <!-- Product Details Sidebar -->
-                            <div class="product-details-sidebar">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h5 class="m-0">Product Details</h5>
-                                    <button class="btn btn-sm btn-outline-secondary close-sidebar">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-                                <div class="product-info">
-                                    <div class="d-flex gap-3 mb-4">
-                                        <div class="product-placeholder" style="height:200px; flex: 0 0 200px;">
-                                            <i class="bi bi-box-seam" style="font-size:48px;"></i>
-                                        </div>
-                                        <div class="d-flex flex-column gap-2" style="flex: 1;">
-                                            <img src="product-thumbnail-1.jpg" class="img-thumbnail"
-                                                style="width:80px; height:80px; object-fit:cover;">
-                                            <img src="product-thumbnail-2.jpg" class="img-thumbnail"
-                                                style="width:80px; height:80px; object-fit:cover;">
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <h4 id="productTitle" class="mb-1"></h4>
-                                        <div class="text-muted small mb-2" id="productCode"></div>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <h5 class="mb-2">Price</h5>
-                                        <h3 id="productPrice" class="text-dark mb-0"></h3>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <div class="row g-3">
-                                            <div class="col-6">
-                                                <label class="form-label small text-muted">Availability</label>
-                                                <div class="text-success">In stock</div>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small text-muted">Weight</label>
-                                                <div id="productWeight"></div>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small text-muted">Brand</label>
-                                                <div id="productBrand"></div>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small text-muted">Category</label>
-                                                <div id="productCategory"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <h6 class="mb-2">Product Description</h6>
-                                        <p id="productDesc" class="text-muted small"></p>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <h6 class="mb-2">Technical Specifications</h6>
-                                        <div class="text-muted small" id="productSpecs"></div>
-                                    </div>
-
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <button class="btn btn-outline-secondary rounded-circle decrease-quantity"
-                                                style="width:32px; height:32px; padding:0;">-</button>
-                                            <span class="quantity-display">1</span>
-                                            <button class="btn btn-outline-secondary rounded-circle increase-quantity"
-                                                style="width:32px; height:32px; padding:0;">+</button>
-                                        </div>
-                                        <button class="btn add-to-cart" style="background-color: #6b0f0f; color: white;">
-                                            Add to Cart
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Shopping Cart Popup -->
-                            <div class="overlay"></div>
-                            <div class="shopping-cart-popup">
-                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                                    <h5 class="m-0">Shopping Cart</h5>
-                                    <button class="btn btn-sm btn-outline-secondary close-cart">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- Cart Items with Quantity Controls -->
-                                <div id="cartItems" class="mb-4" style="max-height: 400px; overflow-y: auto;">
-                                    <!-- Cart items will be inserted here dynamically -->
-                                </div>
-                                
-                                <!-- Cart Summary -->
-                                <div class="border-top pt-3">
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span class="fw-bold">Subtotal</span>
-                                        <span class="fw-bold" id="cartSubtotal">₱0.00</span>
-                                    </div>
-                                    <button class="btn w-100 proceed-checkout-btn" 
-                                            style="background-color: #6b0f0f; color: white;"
-                                            disabled>
-                                        Proceed to Checkout
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Checkout/Order Summary Popup -->
-                            <div class="checkout-popup">
-                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                                    <h5 class="m-0">Order Summary</h5>
-                                    <button class="btn btn-sm btn-outline-secondary close-checkout">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- Order Items List -->
-                                <div class="mb-4">
-                                    <h6 class="mb-3">Order Items</h6>
-                                    <div id="orderItemsList" style="max-height: 250px; overflow-y: auto;">
-                                        <!-- Items will be inserted here -->
-                                    </div>
-                                </div>
-                                
-                                <!-- Order Summary Details -->
-                                <div class="border-top pt-3 mb-4">
-                                    <h6 class="mb-3">Payment Summary</h6>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Subtotal</span>
-                                        <span id="checkoutSubtotal">₱0.00</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Shipping Fee</span>
-                                        <span id="checkoutShipping">₱0.00</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
-                                        <span class="text-muted">Tax (12%)</span>
-                                        <span id="checkoutTax">₱0.00</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-4">
-                                        <span class="fw-bold fs-5">Total</span>
-                                        <span class="fw-bold fs-5 text-danger" id="checkoutTotal">₱0.00</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Action Buttons -->
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-outline-secondary back-to-cart-btn" style="flex: 1;">
-                                        <i class="bi bi-arrow-left me-2"></i>Back to Cart
-                                    </button>
-                                    <button class="btn confirm-order-btn" 
-                                            style="background-color: #6b0f0f; color: white; flex: 2;">
-                                        <i class="bi bi-check-circle me-2"></i>Confirm Order
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <script src='./scripts/catalog.js'></script>
-    </body>
-
-</html>
-
-<?php
-session_start();
-
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
-    header("Location: ./login.php");
-    exit;
+    
+    private function syncJsonData() {
+        $jsonFile = __DIR__ . '/data/products.json';
+        if (file_exists($jsonFile)) {
+            $jsonData = json_decode(file_get_contents($jsonFile), true);
+            
+            if (isset($jsonData['products'])) {
+                $productStmt = $this->pdo->prepare("INSERT IGNORE INTO product (category_id, product_name, description, price) VALUES (?, ?, ?, ?)");
+                $inventoryStmt = $this->pdo->prepare("INSERT IGNORE INTO inventory (product_id, stock_quantity) VALUES (?, ?)");
+                $imageStmt = $this->pdo->prepare("INSERT IGNORE INTO product_image (product_id, image_url, is_primary) VALUES (?, ?, ?)");
+                
+                foreach ($jsonData['products'] as $product) {
+                    // Get category ID
+                    $categoryStmt = $this->pdo->prepare("SELECT category_id FROM category WHERE category_name = ?");
+                    $categoryStmt->execute([$product['category']]);
+                    $category = $categoryStmt->fetch();
+                    
+                    if ($category) {
+                        $productStmt->execute([
+                            $category['category_id'],
+                            $product['product_name'],
+                            $product['description'],
+                            $product['price']
+                        ]);
+                        
+                        $product_id = $this->pdo->lastInsertId();
+                        
+                        if ($product_id) {
+                            $inventoryStmt->execute([$product_id, $product['stock_quantity']]);
+                            
+                            if (!empty($product['image_url'])) {
+                                $imageStmt->execute([$product_id, $product['image_url'], TRUE]);
+                            }
+                        }
+                    }
+                }
+                
+                echo "JSON data synchronized successfully.<br>";
+            }
+        }
+    }
 }
 
-function checkAdminAccess() {
-    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-        header("Location: ./catalog.php");
-        exit;
-    }
+// Run setup if this file is accessed directly
+if (basename($_SERVER['PHP_SELF']) === 'setup_database.php') {
+    $setup = new DatabaseSetup();
+    $setup->setupDatabase();
 }
 ?>
-
-
-// auth_check.php
-
-<?php
-session_start();
-
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
-    header("Location: ./login.php");
-    exit;
-}
-
-function checkAdminAccess() {
-    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-        header("Location: ./catalog.php");
-        exit;
-    }
-}
-?>
-

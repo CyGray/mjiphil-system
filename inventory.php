@@ -16,6 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Start transaction
             $pdo->beginTransaction();
 
+            // Handle file upload
+            $uploaded_image_url = $image_url; // Default to manual URL input
+            
+            if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+                $uploaded_image_url = handleImageUpload($_FILES['product_image'], $product_name);
+            }
+
             // Insert into product table
             $stmt = $pdo->prepare("INSERT INTO product (category_id, product_name, description, price) VALUES (?, ?, ?, ?)");
             $stmt->execute([$category_id, $product_name, $description, $price]);
@@ -26,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$product_id, $stock_quantity]);
 
             // Insert image if provided
-            if (!empty($image_url)) {
+            if (!empty($uploaded_image_url)) {
                 $stmt = $pdo->prepare("INSERT INTO product_image (product_id, image_url) VALUES (?, ?)");
-                $stmt->execute([$product_id, $image_url]);
+                $stmt->execute([$product_id, $uploaded_image_url]);
             }
 
             // Get category name for JSON
@@ -43,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'price' => (float)$price,
                 'stock_quantity' => (int)$stock_quantity,
                 'category' => $category['category_name'],
-                'image_url' => $image_url
+                'image_url' => $uploaded_image_url
             ];
             
             $jsonManager->addProduct($jsonProduct);
@@ -53,11 +60,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (PDOException $e) {
             $pdo->rollBack();
             $_SESSION['error'] = "Error adding item: " . $e->getMessage();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $_SESSION['error'] = "Error uploading image: " . $e->getMessage();
         }
         
         header("Location: inventory.php");
         exit;
     }
+}
+
+function handleImageUpload($file, $product_name) {
+    // Validate file type
+    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+    $file_type = mime_content_type($file['tmp_name']);
+    
+    if (!in_array($file_type, $allowed_types)) {
+        throw new Exception('Invalid file type. Allowed: JPG, PNG, WebP, SVG');
+    }
+
+    // Create upload directory if it doesn't exist
+    $upload_dir = __DIR__ . '/assets/products/img/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+
+    // Generate safe filename
+    $original_name = pathinfo($file['name'], PATHINFO_FILENAME);
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    
+    // Use product name for filename, fallback to original name
+    $base_name = !empty($product_name) ? $product_name : $original_name;
+    $safe_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', $base_name);
+    $filename = $safe_name . '.' . $extension;
+    
+    $file_path = $upload_dir . $filename;
+
+    // Ensure unique filename
+    $counter = 1;
+    while (file_exists($file_path)) {
+        $filename = $safe_name . '_' . $counter . '.' . $extension;
+        $file_path = $upload_dir . $filename;
+        $counter++;
+    }
+
+    // Move uploaded file
+    if (!move_uploaded_file($file['tmp_name'], $file_path)) {
+        throw new Exception('Failed to move uploaded file');
+    }
+
+    // Return relative path for database storage
+    return './assets/products/img/' . $filename;
 }
 
 // Get categories for dropdown
@@ -130,137 +183,118 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory - MJI PHIL Construction</title>
+    
+    <!-- Bootstrap & Core Styles -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./styles/components.css">
+    
+    <!-- Icons & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <link href="./styles/inventory.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Page Specific Styles -->
+    <link href="./styles/inventory_f.css" rel="stylesheet">
 </head>
 <body>
-    <div class="header">
-        <div class="logo-section">
-            <div class="logo">MJI</div>
-            <span class="company-name">MJIPHIL CONSTRUCTION</span>
-        </div>
-        <div class="header-right">
-            <i class="fas fa-bars menu-icon"></i>
-            <form method="GET" action="inventory.php" class="search-header">
-                <i class="fas fa-search"></i>
-                <input type="text" name="search" placeholder="Search Products here" id="headerSearch" value="<?php echo htmlspecialchars($search); ?>">
-            </form>
-            <div class="filter-icon" onclick="toggleFilterModal()">
-                <i class="fas fa-filter"></i>
-            </div>
-        </div>
-    </div>
+    <div class="app-container">
+        
+        <?php include 'menu.php'; ?>
 
-    <div class="main-layout">
-        <div class="sidebar">
-            <div class="sidebar-item">
-                <i class="fas fa-th-large"></i>
-                <span><a href="catalog.php" style="color: inherit; text-decoration: none;">CATALOG</a></span>
-            </div>
-            <div class="sidebar-item active">
-                <i class="fas fa-box"></i>
-                <span>INVENTORY</span>
-            </div>
-            <div class="sidebar-item">
-                <i class="fas fa-lock"></i>
-                <span>PRIVACY</span>
-            </div>
-            <div class="sidebar-item">
-                <i class="fas fa-cog"></i>
-                <span>SERVICES</span>
-            </div>
-            <div class="sidebar-item">
-                <i class="fas fa-info-circle"></i>
-                <span>ABOUT US</span>
-            </div>
-            <div class="sidebar-item">
-                <i class="fas fa-file-alt"></i>
-                <span>INFORMATION</span>
-            </div>
-            <div class="sidebar-item">
-                <i class="fas fa-share-alt"></i>
-                <span>SOCIAL MEDIA</span>
-            </div>
-            <div class="logout-section">
-                <div class="logout-item" onclick="logout()">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Logout</span>
+        <main class="main-content">
+            
+            <div class="top-bar-new">
+               <div class="search-actions-container">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search by name or ID..." value="<?php echo htmlspecialchars($search); ?>">
+                        
+                        <button class="btn-filter-icon" onclick="toggleFilterModal()">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="top-bar-actions">
+                        <button class="btn-add" onclick="openAddModal()">
+                            <i class="fas fa-plus"></i>
+                            Add Item
+                        </button>
+                        <button class="btn-upload" onclick="openBulkUpload()">
+                            <i class="fas fa-upload"></i>
+                            Bulk Upload
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="content-area">
+            </div> 
+            
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success">
                     <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
                 </div>
             <?php endif; ?>
-
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-danger">
                     <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>
 
-            <h1 class="page-title">INVENTORY</h1>
-
-            <div class="controls-bar">
-                <div class="controls-left">
-                    <form method="GET" action="inventory.php" class="d-flex gap-2">
-                        <select name="category" class="btn btn-outline" onchange="this.form.submit()">
-                            <option value="">All Categories</option>
+            <div class="controls-wrapper-new">
+                
+               <div class="top-controls-row">
+                    <div class="filters-row-new">
+                        <select class="select-filter-new" name="type" onchange="applyFilter(this, 'type')">
+                            <option value="">Type: All</option>
                             <?php foreach ($categories as $category): ?>
-                                <option value="<?php echo $category['category_id']; ?>" <?php echo ($category_filter == $category['category_id']) ? 'selected' : ''; ?>>
+                                <option value="<?php echo htmlspecialchars($category['category_name']); ?>" 
+                                    <?php echo ($type_filter == $category['category_name']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($category['category_name']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <select name="type" class="btn btn-outline" onchange="this.form.submit()">
-                            <option value="">All Types</option>
-                            <option value="Tools" <?php echo ($type_filter == 'Tools') ? 'selected' : ''; ?>>Tools</option>
-                            <option value="Materials" <?php echo ($type_filter == 'Materials') ? 'selected' : ''; ?>>Materials</option>
-                            <option value="Safety Gear" <?php echo ($type_filter == 'Safety Gear') ? 'selected' : ''; ?>>Safety Gear</option>
+                        <select class="select-filter-new">
+                            <option>Low Stock</option>
+                            <option>High Stock</option>
                         </select>
-                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
-                    </form>
-                </div>
-                <div class="controls-right">
-                    <button class="btn btn-primary" onclick="openAddModal()">
-                        <i class="fas fa-plus"></i> Add Item
-                    </button>
-                    <button class="btn btn-outline" onclick="openBulkUpload()">
-                        <i class="fas fa-upload"></i> Bulk Upload
-                    </button>
-                    <div class="view-toggle">
-                        <button class="active">
+                        <select class="select-filter-new">
+                            <option>High Demand</option>
+                            <option>Low Demand</option>
+                        </select>
+                    </div>
+
+                    <div class="view-switcher-new">
+                        <button class="view-btn active">
                             <i class="fas fa-list"></i>
                         </button>
-                        <button>
-                            <i class="fas fa-th"></i>
-                        </button>
+                        <button class="view-btn">
+                            <i class="fas fa-th-large"></i>
+                     </button>
                     </div>
                 </div>
-            </div>
 
+                <div class="tabs-new">
+                    <button class="tab-new active">All</button>
+                    <button class="tab-new">Brgy. Bata</button>
+                </div>
+
+            </div> 
             <div class="table-container">
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th onclick="sortTable('product_id')">ID <i class="fas fa-sort"></i></th>
-                            <th onclick="sortTable('product_name')">Item Name <i class="fas fa-sort"></i></th>
-                            <th>Image</th>
-                            <th onclick="sortTable('price')">Price <i class="fas fa-sort"></i></th>
-                            <th onclick="sortTable('stock_quantity')">Quantity <i class="fas fa-sort"></i></th>
-                            <th onclick="sortTable('monthly_sales')">Monthly Sales <i class="fas fa-sort"></i></th>
-                            <th onclick="sortTable('category_name')">Category <i class="fas fa-sort"></i></th>
-                            <th>Description</th>
-                            <th>Actions</th>
+                            <th onclick="sortTable('product_name')">ITEM NAME <i class="fas fa-sort"></i></th>
+                            <th>IMAGE </th>
+                            <th onclick="sortTable('price')">PRICE <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('stock_quantity')">QUANTITY <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('monthly_sales')">MONTHLY SALES <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('category_name')">TYPE <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable('description')">DESCRIPTION <i class="fas fa-sort"></i></th>
+                            <th>ACTIONS</th>
                         </tr>
                     </thead>
-                    <tbody id="inventoryTableBody">
+                    <tbody>
                         <?php if (empty($inventory_items)): ?>
                             <tr>
-                                <td colspan="9" class="text-center">No items found</td>
+                                <td colspan="9" style="text-align: center; padding: 3rem; color: #999;">No items found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($inventory_items as $item): ?>
@@ -268,23 +302,23 @@ try {
                                     <td><?php echo htmlspecialchars($item['product_id']); ?></td>
                                     <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                                     <td>
-                                        <div class="item-image">
+                                        <div class="table-image">
                                             <?php if (!empty($item['image_url'])): ?>
-                                                <img src="<?php echo htmlspecialchars($item['image_url']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                <img src="<?php echo htmlspecialchars($item['image_url']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>">
                                             <?php else: ?>
                                                 <i class="fas fa-image"></i>
                                             <?php endif; ?>
                                         </div>
-                                    </td>
+                                   </td>
                                     <td>PHP <?php echo number_format($item['price'], 2); ?></td>
                                     <td><?php echo htmlspecialchars($item['stock_quantity']); ?></td>
                                     <td><?php echo htmlspecialchars($item['monthly_sales']); ?></td>
                                     <td><?php echo htmlspecialchars($item['category_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($item['description']); ?></td>
+                                    <td><?php echo htmlspecialchars(substr($item['description'], 0, 30)) . (strlen($item['description']) > 30 ? '...' : ''); ?></td>
                                     <td>
-                                        <div class="action-icons">
-                                            <i class="fas fa-pen" onclick="editItem(<?php echo $item['product_id']; ?>)"></i>
-                                            <i class="fas fa-trash-alt" onclick="deleteItem(<?php echo $item['product_id']; ?>)"></i>
+                                        <div class="action-buttons">
+                                            <button class="btn-action" title="Edit Item"><i class="fas fa-pencil-alt"></i></button>
+                                            <button class="btn-action" title="Delete Item"><i class="fas fa-trash-alt"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -293,7 +327,7 @@ try {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- Add Item Modal -->
@@ -304,7 +338,7 @@ try {
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form method="POST" id="addItemForm">
+                <form method="POST" id="addItemForm" enctype="multipart/form-data">
                     <input type="hidden" name="add_item" value="1">
                     
                     <div class="form-group">
@@ -338,10 +372,29 @@ try {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Image URL (optional)</label>
-                            <input type="text" class="form-control" name="image_url" placeholder="Image URL">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Product Image</label>
+                        <div class="file-upload-container">
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload or drag and drop</p>
+                                <span>PNG, JPG, JPEG, WebP, SVG (Max: 5MB)</span>
+                                <input type="file" id="product_image" name="product_image" accept=".png,.jpg,.jpeg,.webp,.svg" style="display: none;">
+                            </div>
+                            <div id="filePreview" class="file-preview" style="display: none;">
+                                <img id="previewImage" src="" alt="Preview">
+                                <button type="button" onclick="removeImage()" class="btn-remove-image">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Or enter Image URL (optional)</label>
+                        <input type="text" class="form-control" name="image_url" placeholder="https://example.com/image.jpg">
                     </div>
 
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
@@ -362,12 +415,18 @@ try {
             let newOrder = 'asc';
             if (currentSort === column && currentOrder === 'asc') {
                 newOrder = 'desc';
-            }
+           }
             
             url.searchParams.set('sort', column);
             url.searchParams.set('order', newOrder);
             window.location.href = url.toString();
         }
+
+        function applyFilter(select, filterType) {
+            const url = new URL(window.location.href);
+            url.searchParams.set(filterType, select.value);
+            window.location.href = url.toString();
+       }
 
         function openAddModal() {
             document.getElementById('addItemModal').classList.add('show');
@@ -375,13 +434,15 @@ try {
 
         function closeModal() {
             document.getElementById('addItemModal').classList.remove('show');
+       }
+
+        function openBulkUpload() {
+            alert('Bulk upload functionality');
         }
 
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = 'logout.php';
-            }
-        }
+        function toggleFilterModal() {
+            alert('Filter modal functionality');
+       }
 
         // Close modal when clicking outside
         window.onclick = function(event) {
@@ -392,11 +453,13 @@ try {
         }
 
         // Auto-submit search when typing stops
-        let searchTimeout;
-        document.getElementById('headerSearch').addEventListener('input', function() {
+       let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                this.form.submit();
+                const url = new URL(window.location.href);
+                url.searchParams.set('search', this.value);
+                window.location.href = url.toString();
             }, 500);
         });
     </script>
