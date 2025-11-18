@@ -23,23 +23,18 @@ class JsonDataManager {
         $logMessage .= " | Data: " . json_encode($data);
     }
     error_log($logMessage);
-    
-    // Only output to browser console if not in an API/JSON context
-    // Check if we're in a web context and not an API call
     if (php_sapi_name() !== 'cli' && !$this->isJsonRequest()) {
         echo "<script>console.log('" . addslashes($logMessage) . "');</script>";
     }
 }
 
 private function isJsonRequest() {
-    // Check if this is likely an API/JSON request
     if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
         return true;
     }
     if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
         return true;
     }
-    // Check if we're in a script that typically returns JSON
     $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
     if (strpos($scriptName, 'api/') !== false || 
         strpos($scriptName, 'delete_item.php') !== false ||
@@ -119,7 +114,6 @@ private function isJsonRequest() {
     $updatedCount = 0;
     
     foreach ($data['products'] as &$product) {
-        // Look for matching id in the JSON data (since your JSON uses 'id', not 'product_id')
         $currentId = $product['id'] ?? 'none';
         $this->debugLog("Checking product", [
             'json_id' => $currentId,
@@ -129,15 +123,10 @@ private function isJsonRequest() {
         
         if (isset($product['id']) && $product['id'] == $productId) {
             $this->debugLog("FOUND matching product to update", $product);
-            
-            // Preserve the original created_at if it exists
             $updatedProduct['created_at'] = $product['created_at'] ?? date('Y-m-d H:i:s');
             $updatedProduct['updated_at'] = date('Y-m-d H:i:s');
-            
-            // Preserve the original id
             $updatedProduct['id'] = $product['id'];
-            
-            // Merge the updated data with existing product data
+
             $product = array_merge($product, $updatedProduct);
             $found = true;
             $updatedCount++;
@@ -175,8 +164,7 @@ public function deleteProduct($productId) {
     ]);
     
     $initialCount = count($data['products']);
-    
-    // Filter out the product with matching id (since your JSON uses 'id')
+
     $data['products'] = array_filter($data['products'], function($product) use ($productId) {
         $match = !(isset($product['id']) && $product['id'] == $productId);
         
@@ -198,8 +186,7 @@ public function deleteProduct($productId) {
         'final_count' => $finalCount,
         'deleted_count' => $deletedCount
     ]);
-    
-    // Only save if something was actually removed
+
     if ($deletedCount > 0) {
         $result = $this->saveData($data);
         if ($result) {
@@ -219,7 +206,6 @@ public function deleteProduct($productId) {
     private function generateProductId($data) {
         $maxId = 0;
         foreach ($data['products'] as $product) {
-            // Check both 'id' and 'product_id' fields
             if (isset($product['id']) && $product['id'] > $maxId) {
                 $maxId = $product['id'];
             }

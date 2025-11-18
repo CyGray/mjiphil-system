@@ -1,4 +1,3 @@
-// /scripts/register-script.js
 document.addEventListener("DOMContentLoaded", function() {
   const registerForm = document.getElementById("registerForm");
   const loginLink = document.getElementById("loginLink");

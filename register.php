@@ -1,7 +1,6 @@
 <?php
 require_once 'config.php';
 
-// Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
     header("Location: ./catalog.php");
     exit;
@@ -12,18 +11,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    
-    // Split full name into first and last name
+
     $name_parts = explode(' ', $name, 2);
     $first_name = $name_parts[0];
     $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
     
-    $phone = ''; // Optional field
-    $role = 'regular'; // Default role
+    $phone = ''; 
+    $role = 'regular'; 
 
     $errors = [];
 
-    // Validation
     if (empty($name)) $errors[] = "Full name is required";
     if (empty($email)) $errors[] = "Email is required";
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Invalid email format";
@@ -33,14 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            // Check if email already exists
             $stmt = $pdo->prepare("SELECT user_id FROM user WHERE email = ?");
             $stmt->execute([$email]);
             
             if ($stmt->fetch()) {
                 $errors[] = "Email already registered";
             } else {
-                // Insert new user
                 $encoded_password = base64_encode($password);
                 $stmt = $pdo->prepare("INSERT INTO user (first_name, last_name, email, password, phone, role) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$first_name, $last_name, $email, $encoded_password, $phone, $role]);
@@ -134,7 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const registerForm = document.getElementById("registerForm");
         const loginLink = document.getElementById("loginLink");
 
-        // Client-side validation
         registerForm.addEventListener("submit", function(e) {
           const password = document.getElementById("password").value.trim();
           const confirmPassword = document.getElementById("confirmPassword").value.trim();

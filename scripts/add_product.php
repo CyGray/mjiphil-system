@@ -1,14 +1,10 @@
 <?php
 header('Content-Type: application/json');
-
-// only accept POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Only POST allowed']);
     exit;
 }
-
-// read JSON body
 $raw = file_get_contents('php://input');
 $body = json_decode($raw, true);
 
