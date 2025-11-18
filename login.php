@@ -1,7 +1,5 @@
 <?php
 require_once 'config.php';
-
-// Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] === 'admin') {
         header("Location: ./inventory.php");
@@ -15,8 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $errors = [];
-
-    // Validation
     if (empty($email)) $errors[] = "Email is required";
     if (empty($password)) $errors[] = "Password is required";
 
@@ -27,14 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
               if ($user && base64_decode($user['password']) === $password) {
-                // Login successful
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['first_name'] = $user['first_name'];
                 $_SESSION['last_name'] = $user['last_name'];
                 $_SESSION['role'] = $user['role'];
 
-                // Redirect based on role
                 if ($user['role'] === 'admin') {
                     header("Location: ./inventory.php");
                 } else {

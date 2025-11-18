@@ -8,8 +8,6 @@
     }
 
 $user_id = $_SESSION['user_id'];
-
-    // Get products from database with categories and images
     try {
         $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
                         c.category_name, c.category_id,
@@ -24,8 +22,6 @@ $user_id = $_SESSION['user_id'];
         
         $stmt = $pdo->query($query);
         $products = $stmt->fetchAll();
-        
-        // Group products by category for the catalog display
         $categorized_products = [];
         foreach ($products as $product) {
             $categorized_products[$product['category_name']][] = $product;
@@ -35,8 +31,6 @@ $user_id = $_SESSION['user_id'];
         error_log("Error loading products: " . $e->getMessage());
         $categorized_products = [];
     }
-
-    // Get categories for filter
     try {
         $stmt = $pdo->query("SELECT category_id, category_name FROM category ORDER BY category_name");
         $categories = $stmt->fetchAll();
@@ -96,7 +90,6 @@ $user_id = $_SESSION['user_id'];
                             <div class="row" id="productGrid">
                                 <?php             
                                 try {
-                                    // Map category names to your existing category slugs
                                     $categoryMap = [
                                         'Tools' => 'tools',
                                         'Materials' => 'materials',
@@ -162,8 +155,6 @@ $user_id = $_SESSION['user_id'];
                                 }
                                 ?>
                             </div>
-
-                            <!-- Product Details Sidebar -->
                             <div class="product-details-sidebar">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <h5 class="m-0">Product Details</h5>
@@ -181,7 +172,6 @@ $user_id = $_SESSION['user_id'];
                                             </div>
                                         </div>
                                         <div class="d-flex flex-column gap-2" style="flex: 1;">
-                                            <!-- Thumbnail images can be added here if you have multiple images -->
                                             <div class="thumbnail-placeholder img-thumbnail" style="width:80px; height:80px; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
                                                 <i class="bi bi-image" style="font-size:20px; color: #6c757d;"></i>
                                             </div>
@@ -250,8 +240,6 @@ $user_id = $_SESSION['user_id'];
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Shopping Cart Popup -->
                             <div class="overlay"></div>
                             <div class="shopping-cart-popup">
                                 <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
@@ -260,13 +248,8 @@ $user_id = $_SESSION['user_id'];
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
-                                
-                                <!-- Cart Items with Quantity Controls -->
                                 <div id="cartItems" class="mb-4" style="max-height: 400px; overflow-y: auto;">
-                                    <!-- Cart items will be inserted here dynamically -->
                                 </div>
-                                
-                                <!-- Cart Summary -->
                                 <div class="border-top pt-3">
                                     <div class="d-flex justify-content-between mb-3">
                                         <span class="fw-bold">Subtotal</span>
@@ -279,8 +262,6 @@ $user_id = $_SESSION['user_id'];
                                     </button>
                                 </div>
                             </div>
-
-                            <!-- Checkout/Order Summary Popup -->
                             <div class="checkout-popup">
                                 <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                                     <h5 class="m-0">Order Summary</h5>
@@ -288,16 +269,11 @@ $user_id = $_SESSION['user_id'];
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
-                                
-                                <!-- Order Items List -->
                                 <div class="mb-4">
                                     <h6 class="mb-3">Order Items</h6>
                                     <div id="orderItemsList" style="max-height: 250px; overflow-y: auto;">
-                                        <!-- Items will be inserted here -->
                                     </div>
                                 </div>
-                                
-                                <!-- Order Summary Details -->
                                 <div class="border-top pt-3 mb-4">
                                     <h6 class="mb-3">Payment Summary</h6>
                                     <div class="d-flex justify-content-between mb-2">
@@ -317,8 +293,6 @@ $user_id = $_SESSION['user_id'];
                                         <span class="fw-bold fs-5 text-danger" id="checkoutTotal">₱0.00</span>
                                     </div>
                                 </div>
-                                
-                                <!-- Action Buttons -->
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-outline-secondary back-to-cart-btn" style="flex: 1;">
                                         <i class="bi bi-arrow-left me-2"></i>Back to Cart

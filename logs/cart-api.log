@@ -38,3 +38,41 @@ GET: Array
 
 
 [Catch] SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mjiphil_catalog`.`cart`, CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE)
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-18 12:41:58 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [role] => admin
+    [name] => Kyle
+)
+
+=== New Request at 2025-11-18 12:41:58 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
