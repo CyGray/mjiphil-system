@@ -6,9 +6,6 @@ $user_id = $_SESSION['user_id'];
 $userName = $_SESSION['name'] ?? 'User';
 $firstName = explode(' ', $userName)[0];
 
-/* ===============================
-   FETCH RECENT ORDERS
-================================= */
 $orderQuery = $pdo->prepare("
     SELECT o.order_id, o.order_date, o.total_amount, s.status_name,
            (SELECT p.product_name 
@@ -24,9 +21,7 @@ $orderQuery = $pdo->prepare("
 $orderQuery->execute([$user_id]);
 $orders = $orderQuery->fetchAll(PDO::FETCH_ASSOC);
 
-/* ===============================
-   FETCH USER CART
-================================= */
+
 $cartQuery = $pdo->prepare("
     SELECT p.product_name, p.price, ci.quantity
     FROM cart_item ci

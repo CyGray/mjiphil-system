@@ -1,49 +1,58 @@
 <?php
-session_start();
 require_once '../config.php';
+
+// Ensure we're only returning JSON
 header('Content-Type: application/json');
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 
 if (empty($email) || empty($password)) {
-    echo json_encode(['success' => false, 'message' => 'Missing fields']);
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Email and password are required']);
     exit;
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM user WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT user_id, first_name, last_name, email, password, role FROM user WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        echo json_encode(['success' => false, 'message' => 'User not found']);
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
         exit;
     }
 
+    // Debug password verification
     $decodedPassword = base64_decode($user['password']);
-
-    if ($decodedPassword === $password) {
-        // ✅ Store user info in session
+    $passwordMatch = ($decodedPassword === $password);
+    
+    if ($passwordMatch) {
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['email'] = $user['email'];
+        $_SESSION['first_name'] = $user['first_name'];
+        $_SESSION['last_name'] = $user['last_name'];
         $_SESSION['role'] = $user['role'];
-        $_SESSION['name'] = $user['first_name'];
-
-        // ✅ Debug log
-        $log = __DIR__ . '/../logs/login.log';
-        file_put_contents($log, "[" . date('Y-m-d H:i:s') . "] Login OK: {$user['email']} (ID={$user['user_id']})\n", FILE_APPEND);
 
         echo json_encode([
             'success' => true,
             'message' => 'Login successful',
             'role' => $user['role'],
-            'user_id' => $user['user_id']
+            'user_id' => $user['user_id'],
+            'redirect' => $user['role'] === 'admin' ? './inventory.php' : './catalog.php'
         ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Incorrect password']);
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
     }
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'DB error: ' . $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }

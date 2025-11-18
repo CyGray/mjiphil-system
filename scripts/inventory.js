@@ -473,7 +473,7 @@ function editItem(productId) {
 function deleteItem(productId) {
     console.log('Delete item clicked:', productId);
     if (confirm('Are you sure you want to delete this item?')) {
-        fetch('scripts/delete_item.php', {
+        fetch('api/delete_item.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -498,7 +498,7 @@ function deleteItem(productId) {
 function logout() {
     console.log('Logout clicked');
     if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'logout.php';
+        window.location.href = '../api/logout.php';
     }
 }
 
@@ -705,7 +705,7 @@ function removeEditImage() {
 function deleteItem(productId) {
     console.log('Delete item clicked:', productId);
     if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-        fetch('scripts/delete_item.php', {
+        fetch('api/delete_item.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

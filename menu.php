@@ -58,7 +58,7 @@
     </ul>
     
     <div class="logout-container mt-auto">
-        <a class="nav-link logout-btn" href="./scripts/logout.php">
+        <a class="nav-link logout-btn" href="./api/logout.php">
             <i class="bi bi-box-arrow-right me-2"></i>LOGOUT
         </a>
     </div>
