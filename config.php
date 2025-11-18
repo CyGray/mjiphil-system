@@ -32,6 +32,8 @@ try {
     echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
     exit;
 }
+
+// this is to use product.json as a backup; we get data from product.json and send it to the database if you don't have those products yet
 require_once 'data/JsonDataManager.php';
 $jsonManager = new JsonDataManager();
 ?>
