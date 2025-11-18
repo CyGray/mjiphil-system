@@ -98,6 +98,18 @@
             "id": 10,
             "created_at": "2025-11-13 08:46:05",
             "updated_at": "2025-11-13 08:46:05"
+        },
+        "10": {
+            "product_id": 20,
+            "product_name": "Frogfish",
+            "description": "asdfadsf",
+            "price": 13412,
+            "stock_quantity": 12341241,
+            "category": "Electrical",
+            "image_url": "./assets/products/img/Frogfish.png",
+            "id": 11,
+            "created_at": "2025-11-18 13:23:40",
+            "updated_at": "2025-11-18 13:23:40"
         }
     }
 }

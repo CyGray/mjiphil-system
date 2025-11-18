@@ -83,58 +83,145 @@ function resetAddForm() {
     removeImage(); // Reset file upload area
 }
 
+// Update the initializeModalEvents function
 function initializeModalEvents() {
     console.log('initializeModalEvents called');
+    
+    // Add item form submission
     const addItemForm = document.getElementById('addItemForm');
     if (addItemForm) {
         console.log('Add item form found, setting up submit handler');
         addItemForm.addEventListener('submit', function(e) {
-            console.log('Form submit triggered');
-            const price = this.querySelector('input[name="price"]');
-            const quantity = this.querySelector('input[name="stock_quantity"]');
-            const fileInput = document.getElementById('product_image');
-            const imageUrlInput = this.querySelector('input[name="image_url"]');
-            
-            console.log('Price element:', price);
-            console.log('Quantity element:', quantity);
-            console.log('File input element:', fileInput);
-            console.log('Image URL input element:', imageUrlInput);
-            
-            // Validate price and quantity
-            if (parseFloat(price.value) < 0) {
-                console.log('Price validation failed');
-                e.preventDefault();
-                alert('Price cannot be negative');
-                price.focus();
-                return;
-            }
-            
-            if (parseInt(quantity.value) < 0) {
-                console.log('Quantity validation failed');
-                e.preventDefault();
-                alert('Quantity cannot be negative');
-                quantity.focus();
-                return;
-            }
-
-            // Validate that either file or URL is provided, not both
-            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
-            const hasUrl = imageUrlInput && imageUrlInput.value.trim() !== '';
-            
-            console.log('File validation - hasFile:', hasFile, 'hasUrl:', hasUrl);
-            
-            if (hasFile && hasUrl) {
-                console.log('Both file and URL provided - validation failed');
-                e.preventDefault();
-                alert('Please provide either an image file or an image URL, not both.');
-                return;
-            }
-            
-            console.log('Form validation passed, submitting...');
+            e.preventDefault();
+            console.log('Add form submit triggered');
+            submitAddForm(this);
         });
-    } else {
-        console.error('Add item form NOT found in initializeModalEvents!');
     }
+
+    // Edit item form submission
+    const editItemForm = document.getElementById('editItemForm');
+    if (editItemForm) {
+        console.log('Edit item form found, setting up submit handler');
+        editItemForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Edit form submit triggered');
+            submitEditForm(this);
+        });
+    }
+}
+
+// New function to handle add form submission via API
+function submitAddForm(form) {
+    console.log('Submitting add form via API');
+    
+    // Validate form
+    if (!validateForm(form)) {
+        return;
+    }
+
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Adding Item...';
+    submitBtn.disabled = true;
+
+    fetch('./api/add_item.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Item added successfully!');
+            closeModal();
+            location.reload(); // Reload to show the new item
+        } else {
+            alert('Error adding item: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding item: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// New function to handle edit form submission via API
+function submitEditForm(form) {
+    console.log('Submitting edit form via API');
+    
+    // Validate form
+    if (!validateForm(form)) {
+        return;
+    }
+
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Updating Item...';
+    submitBtn.disabled = true;
+
+    fetch('./api/edit_item.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Item updated successfully!');
+            closeEditModal();
+            location.reload(); // Reload to show updated item
+        } else {
+            alert('Error updating item: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating item: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Form validation function (reusable for both add and edit)
+function validateForm(form) {
+    const price = form.querySelector('input[name="price"]');
+    const quantity = form.querySelector('input[name="stock_quantity"]');
+    const fileInput = form.querySelector('input[type="file"]');
+    const imageUrlInput = form.querySelector('input[name="image_url"]');
+
+    // Validate price and quantity
+    if (parseFloat(price.value) < 0) {
+        alert('Price cannot be negative');
+        price.focus();
+        return false;
+    }
+    
+    if (parseInt(quantity.value) < 0) {
+        alert('Quantity cannot be negative');
+        quantity.focus();
+        return false;
+    }
+
+    // Validate that either file or URL is provided, not both
+    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    const hasUrl = imageUrlInput && imageUrlInput.value.trim() !== '';
+    
+    if (hasFile && hasUrl) {
+        alert('Please provide either an image file or an image URL, not both.');
+        return false;
+    }
+    
+    return true;
 }
 
 function initializeFileUpload() {
@@ -358,7 +445,7 @@ function editItem(productId) {
     console.log('Edit item clicked:', productId);
     
     // Fetch item data
-    fetch('scripts/get_item.php?product_id=' + productId)
+    fetch('api/get_item.php?product_id=' + productId)
         .then(response => {
             return response.text().then(text => {
                 try {
@@ -428,7 +515,7 @@ function editItem(productId) {
     console.log('Edit item clicked:', productId);
     
     // Fetch item data
-    fetch('scripts/get_item.php?product_id=' + productId)
+    fetch('api/get_item.php?product_id=' + productId)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -669,7 +756,7 @@ window.onclick = function(event) {
 // Update keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     // Ctrl + N to open add modal
-    if (e.key === 'n') {
+    if (e.ctrlKey && e.key === 'n') {
         e.preventDefault();
         console.log('Ctrl+N pressed, opening modal');
         openAddModal();
