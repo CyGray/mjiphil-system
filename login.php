@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$email]);
             $user = $stmt->fetch();
 
-              if ($user && base64_decode($user['password']) === $password) {
+            if ($user && base64_decode($user['password']) === $password) {
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['first_name'] = $user['first_name'];
@@ -58,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </head>
 
   <body>
+    <!-- Include Alert Modal -->
+    <?php include 'utils/alert.php'; ?>
+
     <div class="login-wrapper d-flex">
 
       <div class="left-area flex-grow-1">

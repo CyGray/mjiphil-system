@@ -2,6 +2,7 @@
 require_once 'auth_check.php';
 checkAdminAccess();
 require_once 'config.php';
+
 function handleImageUpload($file, $product_name) {
     // Validate file type
     $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
@@ -107,6 +108,7 @@ try {
     $_SESSION['error'] = "Error loading inventory: " . $e->getMessage();
     $inventory_items = [];
 }
+include 'utils/alert.php';
 ?>
 
 <!DOCTYPE html>
@@ -156,14 +158,21 @@ try {
             </div> 
             
             <?php if (isset($_SESSION['success'])): ?>
-                <div class="alert alert-success">
-                    <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        showAlert('success', 'Success', '<?php echo addslashes($_SESSION['success']); ?>');
+                    });
+                </script>
+                <?php unset($_SESSION['success']); ?>
             <?php endif; ?>
+
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger">
-                    <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        showAlert('danger', 'Error', '<?php echo addslashes($_SESSION['error']); ?>');
+                    });
+                </script>
+                <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
 
             <div class="controls-wrapper-new">

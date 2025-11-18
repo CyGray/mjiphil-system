@@ -44,7 +44,6 @@ function sortTable(column) {
 }
 
 // Modal functions
-// Update the openAddModal function to ensure proper initialization
 function openAddModal() {
     console.log('Opening add modal');
     const modal = document.getElementById('addItemModal');
@@ -83,7 +82,6 @@ function resetAddForm() {
     removeImage(); // Reset file upload area
 }
 
-// Update the initializeModalEvents function
 function initializeModalEvents() {
     console.log('initializeModalEvents called');
     
@@ -110,7 +108,6 @@ function initializeModalEvents() {
     }
 }
 
-// New function to handle add form submission via API
 function submitAddForm(form) {
     console.log('Submitting add form via API');
     
@@ -134,16 +131,17 @@ function submitAddForm(form) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Item added successfully!');
-            closeModal();
-            location.reload(); // Reload to show the new item
+            showAlert('success', 'Success', 'Item added successfully!', '', false, function() {
+                closeModal();
+                location.reload();
+            });
         } else {
-            alert('Error adding item: ' + data.message);
+            showAlert('danger', 'Error', 'Error adding item: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error adding item: ' + error.message);
+        showAlert('danger', 'Error', 'Error adding item: ' + error.message);
     })
     .finally(() => {
         submitBtn.textContent = originalText;
@@ -151,7 +149,6 @@ function submitAddForm(form) {
     });
 }
 
-// New function to handle edit form submission via API
 function submitEditForm(form) {
     console.log('Submitting edit form via API');
     
@@ -175,16 +172,17 @@ function submitEditForm(form) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Item updated successfully!');
-            closeEditModal();
-            location.reload(); // Reload to show updated item
+            showAlert('success', 'Success', 'Item updated successfully!', '', false, function() {
+                closeEditModal();
+                location.reload();
+            });
         } else {
-            alert('Error updating item: ' + data.message);
+            showAlert('danger', 'Error', 'Error updating item: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error updating item: ' + error.message);
+        showAlert('danger', 'Error', 'Error updating item: ' + error.message);
     })
     .finally(() => {
         submitBtn.textContent = originalText;
@@ -192,7 +190,6 @@ function submitEditForm(form) {
     });
 }
 
-// Form validation function (reusable for both add and edit)
 function validateForm(form) {
     const price = form.querySelector('input[name="price"]');
     const quantity = form.querySelector('input[name="stock_quantity"]');
@@ -201,13 +198,13 @@ function validateForm(form) {
 
     // Validate price and quantity
     if (parseFloat(price.value) < 0) {
-        alert('Price cannot be negative');
+        showAlert('warning', 'Validation Error', 'Price cannot be negative');
         price.focus();
         return false;
     }
     
     if (parseInt(quantity.value) < 0) {
-        alert('Quantity cannot be negative');
+        showAlert('warning', 'Validation Error', 'Quantity cannot be negative');
         quantity.focus();
         return false;
     }
@@ -217,7 +214,7 @@ function validateForm(form) {
     const hasUrl = imageUrlInput && imageUrlInput.value.trim() !== '';
     
     if (hasFile && hasUrl) {
-        alert('Please provide either an image file or an image URL, not both.');
+        showAlert('warning', 'Validation Error', 'Please provide either an image file or an image URL, not both.');
         return false;
     }
     
@@ -331,13 +328,6 @@ function initializeFileUpload() {
     });
 
     console.log('File upload initialization completed - using overlay method');
-    console.log('File input position and style:', {
-        position: updatedFileInput.style.position,
-        opacity: updatedFileInput.style.opacity,
-        width: updatedFileInput.style.width,
-        height: updatedFileInput.style.height,
-        zIndex: updatedFileInput.style.zIndex
-    });
 }
 
 function handleFileSelect(file, fileInput, imageUrlInput) {
@@ -346,12 +336,6 @@ function handleFileSelect(file, fileInput, imageUrlInput) {
     const filePreview = document.getElementById('filePreview');
     const previewImage = document.getElementById('previewImage');
     const fileUploadArea = document.getElementById('fileUploadArea');
-
-    console.log('Preview elements:', {
-        filePreview: filePreview,
-        previewImage: previewImage,
-        fileUploadArea: fileUploadArea
-    });
 
     if (!file) {
         console.error('No file provided to handleFileSelect');
@@ -364,18 +348,16 @@ function handleFileSelect(file, fileInput, imageUrlInput) {
     
     if (!allowedTypes.includes(file.type)) {
         console.log('Invalid file type detected:', file.type);
-        alert('Invalid file type. Please select a PNG, JPG, JPEG, WebP, or SVG file.');
+        showAlert('warning', 'Invalid File Type', 'Please select a PNG, JPG, JPEG, WebP, or SVG file.');
         return;
     }
-    console.log('File type validation passed');
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
         console.log('File size too large:', file.size);
-        alert('File size too large. Maximum size is 5MB.');
+        showAlert('warning', 'File Too Large', 'File size too large. Maximum size is 5MB.');
         return;
     }
-    console.log('File size validation passed');
 
     // Clear URL input when file is selected
     if (imageUrlInput) {
@@ -384,7 +366,6 @@ function handleFileSelect(file, fileInput, imageUrlInput) {
     }
 
     // Show preview
-    console.log('Creating file reader for preview');
     const reader = new FileReader();
     reader.onload = (e) => {
         console.log('File reader loaded, setting preview image');
@@ -395,9 +376,9 @@ function handleFileSelect(file, fileInput, imageUrlInput) {
     };
     reader.onerror = (e) => {
         console.error('File reader error:', e);
+        showAlert('danger', 'Error', 'Error reading file: ' + e.target.error);
     };
     reader.readAsDataURL(file);
-    console.log('File reader started reading file');
 }
 
 function removeImage() {
@@ -406,13 +387,6 @@ function removeImage() {
     const filePreview = document.getElementById('filePreview');
     const fileUploadArea = document.getElementById('fileUploadArea');
     const imageUrlInput = document.querySelector('input[name="image_url"]');
-
-    console.log('Elements for removal:', {
-        fileInput: fileInput,
-        filePreview: filePreview,
-        fileUploadArea: fileUploadArea,
-        imageUrlInput: imageUrlInput
-    });
 
     if (fileInput) {
         console.log('Removing file input');
@@ -452,6 +426,7 @@ function editItem(productId) {
                     return JSON.parse(text);
                 } catch (e) {
                     console.error('Invalid JSON response:', text);
+                    showAlert('danger', 'Error', 'Server returned invalid response');
                     throw new Error('Server returned invalid JSON');
                 }
             });
@@ -461,74 +436,91 @@ function editItem(productId) {
                 populateEditForm(data.item);
                 openEditModal();
             } else {
-                alert('Error loading item data: ' + data.message);
+                showAlert('danger', 'Error', 'Error loading item data: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error loading item data: ' + error.message);
+            showAlert('danger', 'Error', 'Error loading item data: ' + error.message);
         });
 }
 
 function deleteItem(productId) {
     console.log('Delete item clicked:', productId);
-    if (confirm('Are you sure you want to delete this item?')) {
-        fetch('api/delete_item.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'product_id=' + productId
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Item deleted successfully');
-                location.reload();
-            } else {
-                alert('Error deleting item: ' + data.message);
-            }
-        })
-        .catch(error => {
-            alert('Error deleting item: ' + error);
-        });
-    }
-}
-
-function logout() {
-    console.log('Logout clicked');
-    if (confirm('Are you sure you want to logout?')) {
-        window.location.href = '../api/logout.php';
-    }
-}
-
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('addItemModal');
-    if (event.target === modal) {
-        console.log('Clicked outside modal, closing');
-        closeModal();
-    }
-}
-
-function editItem(productId) {
-    console.log('Edit item clicked:', productId);
     
-    // Fetch item data
+    // Get product name for confirmation message
     fetch('api/get_item.php?product_id=' + productId)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                populateEditForm(data.item);
-                openEditModal();
+                const productName = data.item.product_name;
+                showAlert(
+                    'danger', 
+                    'Confirm Delete', 
+                    'Are you sure you want to delete this item? This action cannot be undone.', 
+                    productName, 
+                    true, 
+                    function() {
+                        performDelete(productId);
+                    },
+                    'Delete'
+                );
             } else {
-                alert('Error loading item data: ' + data.message);
+                showAlert('danger', 'Error', 'Error loading item data: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error loading item data');
+            showAlert('danger', 'Error', 'Error loading item data: ' + error.message);
         });
+}
+
+function performDelete(productId) {
+    fetch('api/delete_item.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'product_id=' + productId
+    })
+    .then(response => {
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Invalid JSON response:', text);
+                throw new Error('Server returned invalid JSON');
+            }
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Success', 'Item deleted successfully', '', false, function() {
+                location.reload();
+            });
+        } else {
+            showAlert('danger', 'Error', 'Error deleting item: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Error', 'Error deleting item: ' + error.message);
+    });
+}
+
+function logout() {
+    console.log('Logout clicked');
+    showAlert(
+        'primary', 
+        'Confirm Logout', 
+        'Are you sure you want to logout?', 
+        '', 
+        true, 
+        function() {
+            window.location.href = '../api/logout.php';
+        },
+        'Logout'
+    );
 }
 
 function populateEditForm(item) {
@@ -660,13 +652,13 @@ function handleEditFileSelect(file, fileInput, imageUrlInput) {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
     if (!allowedTypes.includes(file.type)) {
-        alert('Invalid file type. Please select a PNG, JPG, JPEG, WebP, or SVG file.');
+        showAlert('warning', 'Invalid File Type', 'Please select a PNG, JPG, JPEG, WebP, or SVG file.');
         return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-        alert('File size too large. Maximum size is 5MB.');
+        showAlert('warning', 'File Too Large', 'File size too large. Maximum size is 5MB.');
         return;
     }
 
@@ -681,6 +673,10 @@ function handleEditFileSelect(file, fileInput, imageUrlInput) {
         previewImage.src = e.target.result;
         filePreview.style.display = 'block';
         fileUploadArea.style.display = 'none';
+    };
+    reader.onerror = (e) => {
+        console.error('File reader error:', e);
+        showAlert('danger', 'Error', 'Error reading file: ' + e.target.error);
     };
     reader.readAsDataURL(file);
 }
@@ -699,43 +695,6 @@ function removeEditImage() {
     setTimeout(() => {
         initializeEditFileUpload();
     }, 50);
-}
-
-// Update the existing deleteItem function to use the correct endpoint
-function deleteItem(productId) {
-    console.log('Delete item clicked:', productId);
-    if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-        fetch('api/delete_item.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'product_id=' + productId
-        })
-        .then(response => {
-            // First, check if the response is valid JSON
-            return response.text().then(text => {
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    console.error('Invalid JSON response:', text);
-                    throw new Error('Server returned invalid JSON');
-                }
-            });
-        })
-        .then(data => {
-            if (data.success) {
-                alert('Item deleted successfully');
-                location.reload();
-            } else {
-                alert('Error deleting item: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error deleting item: ' + error.message);
-        });
-    }
 }
 
 // Update window.onclick to handle both modals
@@ -767,5 +726,15 @@ document.addEventListener('keydown', function(e) {
         console.log('Escape pressed, closing modals');
         closeModal();
         closeEditModal();
+        hideModal(); // Also hide the custom alert modal
     }
 });
+
+// Helper functions for other inventory features
+function openBulkUpload() {
+    showAlert('info', 'Coming Soon', 'Bulk upload functionality will be available soon.');
+}
+
+function toggleFilterModal() {
+    showAlert('info', 'Coming Soon', 'Advanced filter functionality will be available soon.');
+}

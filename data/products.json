@@ -1,15 +1,16 @@
 {
     "products": {
         "1": {
-            "product_name": "VoltMax Cordless Drill 20V",
+            "product_name": "VoltMaxer Cordless Drill 24V",
             "description": "Lightweight cordless drill with 2-speed settings.",
             "price": 3450,
             "stock_quantity": 25,
-            "category": "tools",
+            "category": "Tools",
             "image_url": "./assets/products/img/VoltMaxCordDrill.png",
             "id": 2,
             "created_at": "2025-10-25 15:21:59",
-            "updated_at": "2025-10-25 15:21:59"
+            "updated_at": "2025-11-18 16:12:41",
+            "product_id": 2
         },
         "2": {
             "product_name": "Steel Rebar 16mm (Grade 60)",

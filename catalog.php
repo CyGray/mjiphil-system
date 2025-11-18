@@ -38,6 +38,7 @@ $user_id = $_SESSION['user_id'];
         error_log("Error loading categories: " . $e->getMessage());
         $categories = [];
     }
+    include("utils/alert.php");
 ?>
 
 <!DOCTYPE html>

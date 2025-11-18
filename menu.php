@@ -3,6 +3,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
 <?php
+    // Include the alert modal    
     $current_page = basename($_SERVER['PHP_SELF']);
     $is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 ?>
@@ -58,25 +59,38 @@
     </ul>
     
     <div class="logout-container mt-auto">
-        <a class="nav-link logout-btn" href="./api/logout.php">
+        <a class="nav-link logout-btn" href="./api/logout.php" id="logoutLink">
             <i class="bi bi-box-arrow-right me-2"></i>LOGOUT
         </a>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const logoutBtn = document.querySelector('.logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('Are you sure you want to logout?')) {
-                    window.location.href = this.getAttribute('href');
-                }
-            });
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutLink = document.getElementById('logoutLink');
+
+    if (!logoutLink) return;
+
+    logoutLink.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const logoutUrl = this.getAttribute('href');
+
+        showAlert(
+            'primary',
+            'Confirm Logout',
+            'Are you sure you want to logout?',
+            '',
+            true,
+            function() {
+                window.location.href = logoutUrl;
+            },
+            'Logout'
+        );
     });
+});
 </script>
+
 
 <style>
     /* Additional styling for disabled links */

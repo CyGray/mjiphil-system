@@ -86,16 +86,44 @@ const CatalogManager = (() => {
             await loadCartFromDatabase();
             showAddToCartFeedback();
         } else {
-            alert(res.message);
+            showAlert('danger', 'Error', res.message);
         }
     }
 
     async function removeFromCart(productId) {
-        const res = await cartRequest('delete', { product_id: productId });
+        const item = cart.find(i => i.id == productId);
+        if (!item) return;
+
+        showAlert('warning', 'Remove Item', 
+            `Are you sure you want to remove "${item.name}" from your cart?`,
+            item.name, 
+            true, 
+            async () => {
+                const res = await cartRequest('delete', { product_id: productId });
+                if (res.success) {
+                    await loadCartFromDatabase();
+                    showAlert('success', 'Item Removed', 'Item has been removed from your cart.');
+                } else {
+                    showAlert('danger', 'Error', res.message);
+                }
+            },
+            'Remove'
+        );
+    }
+
+    async function updateItemQuantity(productId, newQuantity) {
+        console.log(`[Cart] Updating product ${productId} → qty ${newQuantity}`);
+        
+        const res = await cartRequest('update', {
+            product_id: productId,
+            quantity: newQuantity
+        });
+
         if (res.success) {
             await loadCartFromDatabase();
         } else {
-            alert(res.message);
+            console.error("[Cart] Update failed:", res.message);
+            showAlert('danger', 'Update Failed', res.message);
         }
     }
 
@@ -191,16 +219,16 @@ const CatalogManager = (() => {
     }
 
     function attachCartItemHandlers() {
-        // Remove item
-        document.querySelectorAll('.remove-cart-item').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.currentTarget.dataset.id;
-                if (confirm(`Remove this item from cart?`)) {
-                    await removeFromCart(id);
-                }
-            });
-        });
+    // Remove item
+    document.querySelectorAll('.remove-cart-item').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = e.currentTarget.dataset.id;
+            const item = cart.find(i => i.id == id);
+            if (!item) return;
 
+            await removeFromCart(id);
+        });
+    });
         // Increase quantity
         document.querySelectorAll('.increase-cart-item').forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -298,51 +326,61 @@ const CatalogManager = (() => {
     }
 
     async function confirmOrder() {
-        try {
-            console.log("[Order] Starting order creation...");
-            
-            const response = await fetch('./api/order.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'action=create'
-            });
-
-            // First check if response is OK
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            // Get the response text first to debug
-            const responseText = await response.text();
-            console.log("[Order] Raw response:", responseText);
-
-            // Try to parse as JSON
-            let data;
-            try {
-                data = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error("[Order] JSON parse error:", parseError);
-                throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
-            }
-
-            console.log("[Order] Parsed response:", data);
-
-            if (data.success) {
-                showOrderSuccessModal();
-                // Clear local cart state
-                cart = [];
-                updateCartDisplay();
-                updateCartCount();
-                closeCheckout();
-            } else {
-                alert(data.message || "Failed to create order.");
-            }
-        } catch (err) {
-            console.error("Order creation failed:", err);
-            alert("Order creation failed: " + err.message);
+        if (cart.length === 0) {
+            showAlert('warning', 'Empty Cart', 'Your cart is empty. Add items before proceeding.');
+            return;
         }
+
+        showAlert('primary', 'Confirm Order', 
+            'Are you sure you want to place this order? This action cannot be undone.',
+            '', 
+            true, 
+            async () => {
+                try {
+                    console.log("[Order] Starting order creation...");
+                    
+                    const response = await fetch('./api/order.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'action=create'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const responseText = await response.text();
+                    console.log("[Order] Raw response:", responseText);
+
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        console.error("[Order] JSON parse error:", parseError);
+                        throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+                    }
+
+                    console.log("[Order] Parsed response:", data);
+
+                    if (data.success) {
+                        showOrderSuccessModal();
+                        // Clear local cart state
+                        cart = [];
+                        updateCartDisplay();
+                        updateCartCount();
+                        closeCheckout();
+                    } else {
+                        showAlert('danger', 'Order Failed', data.message || "Failed to create order.");
+                    }
+                } catch (err) {
+                    console.error("Order creation failed:", err);
+                    showAlert('danger', 'Order Failed', "Order creation failed: " + err.message);
+                }
+            },
+            'Place Order'
+        );
     }
 
     function showOrderSuccessModal() {
@@ -515,7 +553,6 @@ function updateProductImageInSidebar(imageUrl, productName) {
         return response.json();
     }
 
-    // === Search and Filter ===
     function applyFilters() {
         const searchTerm = (elements.searchInput.value || '').trim().toLowerCase();
         const activeCategory = elements.chips.find(c => c.classList.contains('active'))?.dataset.cat || 'all';
@@ -557,6 +594,8 @@ function updateProductImageInSidebar(imageUrl, productName) {
                 addToCart(currentProduct, currentQuantity);
                 currentQuantity = 1;
                 elements.quantityDisplay.textContent = '1';
+            } else {
+                showAlert('warning', 'No Product Selected', 'Please select a product first.');
             }
         });
 
@@ -584,15 +623,6 @@ function updateProductImageInSidebar(imageUrl, productName) {
         elements.searchInput?.addEventListener('input', applyFilters);
         elements.chips.forEach(chip => {
             chip.addEventListener('click', () => setActiveCategory(chip));
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeCart();
-                closeCheckout();
-                closeSidebar();
-            }
         });
     }
 
@@ -632,7 +662,6 @@ function updateProductImageInSidebar(imageUrl, productName) {
     };
 })();
 
-// Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', CatalogManager.init);
     document.addEventListener('DOMContentLoaded', () => {
