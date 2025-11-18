@@ -1,2 +1,0 @@
-Now I would like you to add the edit and delete functions for my inventory.php
-
