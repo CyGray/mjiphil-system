@@ -30,7 +30,7 @@ try {
     $pdo->beginTransaction();
 
     $uploaded_image_url = $image_url;
-    
+
     if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
         $uploaded_image_url = handleImageUpload($_FILES['product_image'], $product_name);
     }
@@ -52,26 +52,26 @@ try {
     $category = $catStmt->fetch();
 
     $jsonProduct = [
-        'product_id' => (int)$product_id,
+        'product_id' => (int) $product_id,
         'product_name' => $product_name,
         'description' => $description,
-        'price' => (float)$price,
-        'stock_quantity' => (int)$stock_quantity,
+        'price' => (float) $price,
+        'stock_quantity' => (int) $stock_quantity,
         'category' => $category['category_name'],
         'image_url' => $uploaded_image_url ?: ''
     ];
-    
+
     $jsonUpdateResult = $jsonManager->addProduct($jsonProduct);
 
     $pdo->commit();
-    
+
     ob_end_clean();
     echo json_encode([
-        'success' => true, 
+        'success' => true,
         'message' => 'Item added successfully!',
         'product_id' => $product_id
     ]);
-    
+
 } catch (PDOException $e) {
     $pdo->rollBack();
     ob_end_clean();
@@ -82,10 +82,11 @@ try {
     echo json_encode(['success' => false, 'message' => 'Error uploading image: ' . $e->getMessage()]);
 }
 
-function handleImageUpload($file, $product_name) {
+function handleImageUpload($file, $product_name)
+{
     $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
     $file_type = mime_content_type($file['tmp_name']);
-    
+
     if (!in_array($file_type, $allowed_types)) {
         throw new Exception('Invalid file type. Allowed: JPG, PNG, WebP, SVG');
     }
@@ -97,11 +98,11 @@ function handleImageUpload($file, $product_name) {
 
     $original_name = pathinfo($file['name'], PATHINFO_FILENAME);
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-    
+
     $base_name = !empty($product_name) ? $product_name : $original_name;
     $safe_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', $base_name);
     $filename = $safe_name . '.' . $extension;
-    
+
     $file_path = $upload_dir . $filename;
 
     $counter = 1;

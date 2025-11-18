@@ -1,43 +1,3 @@
-<?php
-require_once 'config.php';
-if (isset($_SESSION['user_id'])) {
-    header("Location: ./dashboard.php");
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $errors = [];
-    if (empty($email)) $errors[] = "Email is required";
-    if (empty($password)) $errors[] = "Password is required";
-
-    if (empty($errors)) {
-        try {
-            $stmt = $pdo->prepare("SELECT user_id, first_name, last_name, email, password, role FROM user WHERE email = ?");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-            if ($user && base64_decode($user['password']) === $password) {
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['first_name'] = $user['first_name'];
-                $_SESSION['last_name'] = $user['last_name'];
-                $_SESSION['role'] = $user['role'];
-
-                header("Location: ./dashboard.php");
-                exit;
-            } else {
-                $errors[] = "Invalid email or password";
-            }
-        } catch (PDOException $e) {
-            $errors[] = "Database error: " . $e->getMessage();
-        }
-    }
-}
-?>
-
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -48,6 +8,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="./styles/login.css">
+    <?php
+      require_once 'config.php';
+      if (isset($_SESSION['user_id'])) {
+          header("Location: ./dashboard.php");
+          exit;
+      }
+
+      if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+          $email = trim($_POST['email'] ?? '');
+          $password = $_POST['password'] ?? '';
+          $errors = [];
+          if (empty($email)) $errors[] = "Email is required";
+          if (empty($password)) $errors[] = "Password is required";
+
+          if (empty($errors)) {
+              try {
+                  $stmt = $pdo->prepare("SELECT user_id, first_name, last_name, email, password, role FROM user WHERE email = ?");
+                  $stmt->execute([$email]);
+                  $user = $stmt->fetch();
+
+                  if ($user && base64_decode($user['password']) === $password) {
+                      $_SESSION['user_id'] = $user['user_id'];
+                      $_SESSION['email'] = $user['email'];
+                      $_SESSION['first_name'] = $user['first_name'];
+                      $_SESSION['last_name'] = $user['last_name'];
+                      $_SESSION['role'] = $user['role'];
+
+                      header("Location: ./dashboard.php");
+                      exit;
+                  } else {
+                      $errors[] = "Invalid email or password";
+                  }
+              } catch (PDOException $e) {
+                  $errors[] = "Database error: " . $e->getMessage();
+              }
+          }
+      }
+      ?>
   </head>
 
   <body>

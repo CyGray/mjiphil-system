@@ -1,56 +1,3 @@
-<?php
-require_once 'config.php';
-
-if (isset($_SESSION['user_id'])) {
-    header("Location: ./catalog.php");
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
-
-    $name_parts = explode(' ', $name, 2);
-    $first_name = $name_parts[0];
-    $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
-    
-    $phone = ''; 
-    $role = 'regular'; 
-
-    $errors = [];
-
-    if (empty($name)) $errors[] = "Full name is required";
-    if (empty($email)) $errors[] = "Email is required";
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Invalid email format";
-    if (empty($password)) $errors[] = "Password is required";
-    if (strlen($password) < 6) $errors[] = "Password must be at least 6 characters";
-    if ($password !== $confirm_password) $errors[] = "Passwords do not match";
-
-    if (empty($errors)) {
-        try {
-            $stmt = $pdo->prepare("SELECT user_id FROM user WHERE email = ?");
-            $stmt->execute([$email]);
-            
-            if ($stmt->fetch()) {
-                $errors[] = "Email already registered";
-            } else {
-                $encoded_password = base64_encode($password);
-                $stmt = $pdo->prepare("INSERT INTO user (first_name, last_name, email, password, phone, role) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$first_name, $last_name, $email, $encoded_password, $phone, $role]);
-                
-                $_SESSION['success'] = "Registration successful! Please login.";
-                header("Location: ./login.php");
-                exit;
-            }
-        } catch (PDOException $e) {
-            $errors[] = "Database error: " . $e->getMessage();
-        }
-    }
-}
-?>
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -60,6 +7,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles/register.css">
+    <?php
+      require_once 'config.php';
+
+      if (isset($_SESSION['user_id'])) {
+          header("Location: ./catalog.php");
+          exit;
+      }
+
+      if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+          $name = trim($_POST['name'] ?? '');
+          $email = trim($_POST['email'] ?? '');
+          $password = $_POST['password'] ?? '';
+          $confirm_password = $_POST['confirm_password'] ?? '';
+
+          $name_parts = explode(' ', $name, 2);
+          $first_name = $name_parts[0];
+          $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+          
+          $phone = ''; 
+          $role = 'regular'; 
+
+          $errors = [];
+
+          if (empty($name)) $errors[] = "Full name is required";
+          if (empty($email)) $errors[] = "Email is required";
+          if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Invalid email format";
+          if (empty($password)) $errors[] = "Password is required";
+          if (strlen($password) < 6) $errors[] = "Password must be at least 6 characters";
+          if ($password !== $confirm_password) $errors[] = "Passwords do not match";
+
+          if (empty($errors)) {
+              try {
+                  $stmt = $pdo->prepare("SELECT user_id FROM user WHERE email = ?");
+                  $stmt->execute([$email]);
+                  
+                  if ($stmt->fetch()) {
+                      $errors[] = "Email already registered";
+                  } else {
+                      $encoded_password = base64_encode($password);
+                      $stmt = $pdo->prepare("INSERT INTO user (first_name, last_name, email, password, phone, role) VALUES (?, ?, ?, ?, ?, ?)");
+                      $stmt->execute([$first_name, $last_name, $email, $encoded_password, $phone, $role]);
+                      
+                      $_SESSION['success'] = "Registration successful! Please login.";
+                      header("Location: ./login.php");
+                      exit;
+                  }
+              } catch (PDOException $e) {
+                  $errors[] = "Database error: " . $e->getMessage();
+              }
+          }
+      }
+    ?>
   </head>
 
   <body>
@@ -154,3 +153,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
   </body>
 </html>
+
+
