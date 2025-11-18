@@ -669,7 +669,7 @@ window.onclick = function(event) {
 // Update keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     // Ctrl + N to open add modal
-    if (e.ctrlKey && e.key === 'n') {
+    if (e.key === 'n') {
         e.preventDefault();
         console.log('Ctrl+N pressed, opening modal');
         openAddModal();
