@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
 
 function checkAdminAccess() {
     if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-        header("Location: ./catalog.php");
+        header("Location: ./dashboard.php");
         exit;
     }
 }

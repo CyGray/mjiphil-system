@@ -55,59 +55,55 @@ try {
     $_SESSION['error'] = "Error loading categories: " . $e->getMessage();
 }
 
-// Get inventory items with search, filter, and sort
 $search = $_GET['search'] ?? '';
-$category_filter = $_GET['category'] ?? '';
 $type_filter = $_GET['type'] ?? '';
 $sort_by = $_GET['sort'] ?? 'product_id';
 $sort_order = $_GET['order'] ?? 'asc';
 
-// Build query
+$allowed_sorts = ['product_id','product_name','price','stock_quantity','monthly_sales','category_name','description'];
+if (!in_array($sort_by, $allowed_sorts)) {
+    $sort_by = 'product_id';
+}
+$sort_order = ($sort_order === 'desc') ? 'desc' : 'asc';
+
 $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
-                     c.category_name, i.stock_quantity,
-                     pi.image_url,
-                     COALESCE(SUM(oi.quantity), 0) as monthly_sales
-           FROM product p
-           LEFT JOIN category c ON p.category_id = c.category_id
-           LEFT JOIN inventory i ON p.product_id = i.product_id
-           LEFT JOIN product_image pi ON p.product_id = pi.product_id
-           LEFT JOIN order_item oi ON p.product_id = oi.product_id
-           LEFT JOIN `order` o ON oi.order_id = o.order_id AND o.order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-           WHERE 1=1";
+                 c.category_name, i.stock_quantity,
+                 pi.image_url,
+                 COALESCE(SUM(oi.quantity), 0) as monthly_sales
+          FROM product p
+          LEFT JOIN category c ON p.category_id = c.category_id
+          LEFT JOIN inventory i ON p.product_id = i.product_id
+          LEFT JOIN product_image pi ON p.product_id = pi.product_id
+          LEFT JOIN order_item oi ON p.product_id = oi.product_id
+          LEFT JOIN `order` o ON oi.order_id = o.order_id 
+                     AND o.order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+          WHERE 1";
 
 $params = [];
 
-// Add search filter
-if (!empty($search)) {
-    $query .= " AND (p.product_name LIKE ? OR p.description LIKE ?)";
-    $search_term = "%$search%";
-    $params[] = $search_term;
-    $params[] = $search_term;
+// SEARCH
+if ($search !== '') {
+    $query .= " AND (p.product_name LIKE ? OR 
+                     p.description LIKE ? OR 
+                     p.product_id LIKE ?)";
+    $term = "%$search%";
+    $params[] = $term;
+    $params[] = $term;
+    $params[] = $term;
 }
 
-// Add category filter
-if (!empty($category_filter)) {
+// FILTER TYPE BY category_id
+if ($type_filter !== '') {
     $query .= " AND p.category_id = ?";
-    $params[] = $category_filter;
-}
-
-// Add type filter
-if (!empty($type_filter)) {
-    $query .= " AND c.category_name = ?";
     $params[] = $type_filter;
 }
 
-// Group by and order by
 $query .= " GROUP BY p.product_id ORDER BY $sort_by $sort_order";
 
-try {
-    $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    $inventory_items = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $_SESSION['error'] = "Error loading inventory: " . $e->getMessage();
-    $inventory_items = [];
-}
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
+$inventory_items = $stmt->fetchAll();
+
 include 'utils/alert.php';
 ?>
 
@@ -179,15 +175,16 @@ include 'utils/alert.php';
                 
                <div class="top-controls-row">
                     <div class="filters-row-new">
-                        <select class="select-filter-new" name="type" onchange="applyFilter(this, 'type')">
+                        <select class="select-filter-new" onchange="applyFilter(this, 'type')">
                             <option value="">Type: All</option>
                             <?php foreach ($categories as $category): ?>
-                                <option value="<?php echo htmlspecialchars($category['category_name']); ?>" 
-                                    <?php echo ($type_filter == $category['category_name']) ? 'selected' : ''; ?>>
+                                <option value="<?php echo $category['category_id']; ?>" 
+                                    <?php echo ($type_filter == $category['category_id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($category['category_name']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+
                         <select class="select-filter-new">
                             <option>Low Stock</option>
                             <option>High Stock</option>
@@ -423,25 +420,31 @@ include 'utils/alert.php';
     <script src="./scripts/inventory.js"></script>
     <script>
         function sortTable(column) {
+        const url = new URL(window.location.href);
+        const currentColumn = url.searchParams.get("sort");
+        const currentOrder = url.searchParams.get("order") || "asc";
+
+        let newOrder = "asc";
+        if (currentColumn === column && currentOrder === "asc") {
+            newOrder = "desc";
+        }
+
+        url.searchParams.set("sort", column);
+        url.searchParams.set("order", newOrder);
+        window.location.href = url.toString();
+    }
+
+
+        function applyFilter(select, key) {
             const url = new URL(window.location.href);
-            const currentSort = url.searchParams.get('sort');
-            const currentOrder = url.searchParams.get('order');
-            
-            let newOrder = 'asc';
-            if (currentSort === column && currentOrder === 'asc') {
-                newOrder = 'desc';
+            if (select.value === "") {
+                url.searchParams.delete(key);
+            } else {
+                url.searchParams.set(key, select.value);
             }
-            
-            url.searchParams.set('sort', column);
-            url.searchParams.set('order', newOrder);
             window.location.href = url.toString();
         }
 
-        function applyFilter(select, filterType) {
-            const url = new URL(window.location.href);
-            url.searchParams.set(filterType, select.value);
-            window.location.href = url.toString();
-        }
 
         function openAddModal() {
             document.getElementById('addItemModal').classList.add('show');
@@ -467,16 +470,16 @@ include 'utils/alert.php';
             }
         }
 
-        // Auto-submit search when typing stops
         let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const url = new URL(window.location.href);
-                url.searchParams.set('search', this.value);
-                window.location.href = url.toString();
-            }, 500);
-        });
+            document.getElementById('searchInput').addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('search', this.value);
+                    window.location.href = url.toString();
+                }, 500);
+            });
+
     </script>
 </body>
 </html>

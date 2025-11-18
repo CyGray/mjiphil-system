@@ -1,21 +1,17 @@
 <?php
-// Temporarily remove the JSON header and add error reporting
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once '../config.php';
 
-// Check if config was loaded successfully
 if (!isset($pdo)) {
     die("Database connection failed");
 }
 
-// Your existing code...
 header('Content-Type: application/json');
 
 try {
-    // Get top 4 products with highest monthly sales, no duplicates
     $featuredQuery = $pdo->prepare("
         SELECT DISTINCT 
             p.product_id,

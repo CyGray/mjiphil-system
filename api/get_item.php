@@ -4,7 +4,6 @@ require_once '../config.php';
 
 checkAdminAccess();
 
-// Set JSON header and buffer output
 header('Content-Type: application/json');
 ob_start();
 
@@ -17,7 +16,6 @@ if (empty($product_id)) {
 }
 
 try {
-    // Get product details with category and inventory
     $query = "SELECT p.product_id, p.product_name, p.description, p.price, 
                      p.category_id, c.category_name,
                      i.stock_quantity, pi.image_url

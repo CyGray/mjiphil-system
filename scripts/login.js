@@ -59,11 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 // Redirect after a short delay to show the success message
                 setTimeout(() => {
-                    if (data.role === "admin") {
-                        window.location.href = "./inventory.php";
-                    } else {
-                        window.location.href = "./catalog.php";
-                    }
+                    window.location.href = "./dashboard.php";
                 }, 1500);
             } else {
                 showAlert("danger", "Login Failed", data.message);

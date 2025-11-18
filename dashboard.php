@@ -36,6 +36,7 @@ $cartSubtotal = 0;
 foreach ($cartItems as $item) {
     $cartSubtotal += $item['price'] * $item['quantity'];
 }
+include("./utils/alert.php");
 ?>
 
 <?php $title = "MJIPhil Dashboard"; ?>

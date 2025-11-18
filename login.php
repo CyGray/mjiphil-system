@@ -1,11 +1,7 @@
 <?php
 require_once 'config.php';
 if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['role'] === 'admin') {
-        header("Location: ./inventory.php");
-    } else {
-        header("Location: ./catalog.php");
-    }
+    header("Location: ./dashboard.php");
     exit;
 }
 
@@ -29,11 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['last_name'] = $user['last_name'];
                 $_SESSION['role'] = $user['role'];
 
-                if ($user['role'] === 'admin') {
-                    header("Location: ./inventory.php");
-                } else {
-                    header("Location: ./dashboard.php");
-                }
+                header("Location: ./dashboard.php");
                 exit;
             } else {
                 $errors[] = "Invalid email or password";
@@ -44,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 
 <!doctype html>
 <html lang="en">

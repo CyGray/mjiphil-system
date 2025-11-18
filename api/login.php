@@ -1,10 +1,8 @@
 <?php
 require_once '../config.php';
 
-// Ensure we're only returning JSON
 header('Content-Type: application/json');
 
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -29,7 +27,6 @@ try {
         exit;
     }
 
-    // Debug password verification
     $decodedPassword = base64_decode($user['password']);
     $passwordMatch = ($decodedPassword === $password);
     
@@ -45,7 +42,7 @@ try {
             'message' => 'Login successful',
             'role' => $user['role'],
             'user_id' => $user['user_id'],
-            'redirect' => $user['role'] === 'admin' ? './inventory.php' : './catalog.php'
+            'redirect' => './dashboard.php'
         ]);
     } else {
         http_response_code(401);

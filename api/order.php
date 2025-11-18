@@ -1,25 +1,20 @@
 <?php
-// ✅ Setup logging IMMEDIATELY
 $logDir = __DIR__ . '/../logs';
 if (!file_exists($logDir)) mkdir($logDir, 0777, true);
 $logFile = $logDir . '/order-api.log';
 
-// Capture all PHP errors
 set_error_handler(function($errno, $errstr, $errfile, $errline) use ($logFile) {
     file_put_contents($logFile, "[Error] $errstr in $errfile:$errline\n", FILE_APPEND);
 });
 
-// ✅ Include config FIRST
 require_once '../config.php';
 
-// ✅ Check if session is already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 header('Content-Type: application/json');
 
-// ✅ Enhanced logging
 file_put_contents($logFile, "\n=== ORDER API Request @ " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 file_put_contents($logFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
 file_put_contents($logFile, "SESSION user_id: " . ($_SESSION['user_id'] ?? 'NOT SET') . "\n", FILE_APPEND);
@@ -38,7 +33,6 @@ file_put_contents($logFile, "Processing action: $action for user_id: $user_id\n"
 try {
     switch ($action) {
         case 'create':
-            // First, get the user's cart_id
             $cartStmt = $pdo->prepare("SELECT cart_id FROM cart WHERE user_id = ?");
             $cartStmt->execute([$user_id]);
             $cart = $cartStmt->fetch();
@@ -52,7 +46,6 @@ try {
             $cart_id = $cart['cart_id'];
             file_put_contents($logFile, "Found cart_id: $cart_id for user $user_id\n", FILE_APPEND);
             
-            // Get cart items with product details and check stock
             $cartQuery = $pdo->prepare("
                 SELECT ci.product_id, ci.quantity, p.price, p.product_name, 
                        COALESCE(i.stock_quantity, 0) as stock_quantity
@@ -73,7 +66,6 @@ try {
                 exit;
             }
 
-            // Check stock availability before proceeding
             foreach ($items as $item) {
                 if ($item['stock_quantity'] < $item['quantity']) {
                     $errorMsg = "Insufficient stock for {$item['product_name']}. Available: {$item['stock_quantity']}, Requested: {$item['quantity']}";
@@ -83,7 +75,6 @@ try {
                 }
             }
 
-            // Compute totals
             $subtotal = 0;
             foreach ($items as $item) {
                 $subtotal += $item['price'] * $item['quantity'];
@@ -94,11 +85,9 @@ try {
 
             file_put_contents($logFile, "Totals - Subtotal: $subtotal, Tax: $tax, Shipping: $shipping, Total: $total\n", FILE_APPEND);
 
-            // Start transaction
             $pdo->beginTransaction();
 
             try {
-                // Insert into `order`
                 $orderStmt = $pdo->prepare("
                     INSERT INTO `order` (user_id, order_status_id, total_amount)
                     VALUES (?, (SELECT order_status_id FROM order_status WHERE status_name='Pending' LIMIT 1), ?)
@@ -108,7 +97,6 @@ try {
                 
                 file_put_contents($logFile, "Order created with ID: $order_id\n", FILE_APPEND);
 
-                // Insert order items AND update inventory
                 $itemStmt = $pdo->prepare("
                     INSERT INTO order_item (order_id, product_id, quantity, unit_price, subtotal)
                     VALUES (?, ?, ?, ?, ?)
@@ -125,25 +113,21 @@ try {
                     
                     $itemStmt->execute([$order_id, $item['product_id'], $item['quantity'], $item['price'], $itemSubtotal]);
                     
-                    // Update inventory
                     file_put_contents($logFile, "Updating inventory for product {$item['product_id']}: reducing by {$item['quantity']}\n", FILE_APPEND);
                     $inventoryStmt->execute([$item['quantity'], $item['product_id']]);
                     
-                    // Check if update was successful
                     if ($inventoryStmt->rowCount() === 0) {
                         file_put_contents($logFile, "[WARNING] Inventory update affected 0 rows for product {$item['product_id']}\n", FILE_APPEND);
-                        // Continue anyway - might be first time setting up inventory
                     }
                 }
 
-                // Clear cart items
                 $clearStmt = $pdo->prepare("DELETE FROM cart_item WHERE cart_id = ?");
                 $clearStmt->execute([$cart_id]);
                 $deletedRows = $clearStmt->rowCount();
                 file_put_contents($logFile, "Cleared cart: $deletedRows items removed\n", FILE_APPEND);
 
                 $pdo->commit();
-                file_put_contents($logFile, "✅ ORDER SUCCESSFULLY CREATED - Order ID: $order_id\n", FILE_APPEND);
+                file_put_contents($logFile, "ORDER SUCCESSFULLY CREATED - Order ID: $order_id\n", FILE_APPEND);
 
                 echo json_encode([
                     'success' => true,
@@ -169,7 +153,6 @@ try {
             $stmt->execute([$user_id]);
             $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Include top item per order for preview
             foreach ($orders as &$order) {
                 $itemStmt = $pdo->prepare("
                     SELECT p.product_name 
