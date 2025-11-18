@@ -131,10 +131,13 @@ function submitAddForm(form) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Close the add modal first
+            closeModal();
+            // Then show success message and reload
             showAlert('success', 'Success', 'Item added successfully!', '', false, function() {
-                closeModal();
                 location.reload();
             });
+            setTimeout(() => location.reload(), 1500);
         } else {
             showAlert('danger', 'Error', 'Error adding item: ' + data.message);
         }
@@ -172,10 +175,13 @@ function submitEditForm(form) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Close the edit modal first
+            closeEditModal();
+            // Then show success message and reload
             showAlert('success', 'Success', 'Item updated successfully!', '', false, function() {
-                closeEditModal();
                 location.reload();
             });
+            setTimeout(() => location.reload(), 1500);
         } else {
             showAlert('danger', 'Error', 'Error updating item: ' + data.message);
         }
@@ -187,6 +193,7 @@ function submitEditForm(form) {
     .finally(() => {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
+        location.reload();
     });
 }
 

@@ -890,3 +890,43 @@ GET: Array
 )
 
 
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [first_name] => Kyle
+    [last_name] => Admin
+    [role] => admin
+)
+
+=== New Request at 2025-11-18 16:28:30 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
+SESSION DATA: Array
+(
+    [user_id] => 2
+    [email] => kyle@mjiphil.com
+    [first_name] => Kyle
+    [last_name] => Admin
+    [role] => admin
+)
+
+=== New Request at 2025-11-18 16:28:30 ===
+POST: Array
+(
+    [action] => get
+)
+
+GET: Array
+(
+)
+
+
