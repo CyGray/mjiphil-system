@@ -93,47 +93,9 @@ foreach ($cartItems as $item) {
 
                         <div class="featured-products">
                             <h3>Featured Products</h3>
-                            <div class="product-grid">
-
-                                <div class="product-card">
-                                    <img src="./assets/products/portland-cement.jpg" alt="Portland Cement" class="product-image">
-                                    <h4>Portland Premium Cement (50kg)</h4>
-                                    <p>High-quality cement for construction projects</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱285.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-
-                                <div class="product-card">
-                                    <img src="./assets/products/drill.jpg" alt="Cordless Drill" class="product-image">
-                                    <h4>VidMac Cordless Drill 20V</h4>
-                                    <p>Powerful and lightweight drill with a 20V battery</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱3,450.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-
-                                <div class="product-card">
-                                    <img src="./assets/products/steel-bars.jpg" alt="Steel Rebar" class="product-image">
-                                    <h4>Steel Rebar 16mm (Grade 60)</h4>
-                                    <p>High-grade reinforcement bars for concrete structures</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱750.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
-
-                                <div class="product-card">
-                                    <img src="./assets/products/hollow-blocks.jpg" alt="Hollow Blocks" class="product-image">
-                                    <h4>BuildFill Hollow Blocks (4x8x16 in)</h4>
-                                    <p>Standard concrete hollow blocks</p>
-                                    <div class="product-footer">
-                                        <span class="product-price">₱18.00</span>
-                                        <button class="btn-view">View</button>
-                                    </div>
-                                </div>
+                            <div class="product-grid" id="featuredProducts">
+                                <!-- Products will be loaded here via JavaScript -->
+                                <div class="loading-spinner">Loading featured products...</div>
                             </div>
                         </div>
                     </div>
@@ -171,7 +133,7 @@ foreach ($cartItems as $item) {
                             <h3>Your Cart</h3>
                             <?php if (empty($cartItems)): ?>
                                 <div class="cart-empty text-center">
-                                    <img src="./assets/icons/hard-hat.png" alt="Empty Cart" width="80">
+                                    <img src="./assets/emptycart.png" alt="Empty Cart" width="80">
                                     <p class="text-muted mt-2 mb-1">Your cart is currently empty.</p>
                                     <a href="catalog.php" class="btn-shop-now-small btn btn-sm btn-dark mt-2">Shop Now</a>
                                 </div>
@@ -209,36 +171,6 @@ foreach ($cartItems as $item) {
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            document.querySelector('.search-box input').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const products = document.querySelectorAll('.product-card');
-                
-                products.forEach(product => {
-                    const title = product.querySelector('h4').textContent.toLowerCase();
-                    const description = product.querySelector('p').textContent.toLowerCase();
-                    
-                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
-                        product.style.display = 'block';
-                    } else {
-                        product.style.display = 'none';
-                    }
-                });
-            });
-
-            document.querySelectorAll('.btn-view').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const productTitle = this.closest('.product-card').querySelector('h4').textContent;
-                    window.location.href = 'catalog.php';
-                });
-            });
-
-            document.querySelectorAll('.btn-view-details').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const orderNumber = this.closest('.order-item').querySelector('.order-number').textContent;
-                    window.location.href = 'order-history.php';
-                });
-            });
-        </script>
+        <script src="scripts/dashboard.js"></script>
     </body>
 </html>
